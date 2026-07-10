@@ -1,0 +1,12 @@
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+# Necesario para React Router: cualquier ruta que Netlify no reconozca como
+# archivo real (ej. /programas/3) debe servir index.html y dejar que
+# React Router decida qué mostrar. Sin esto, recargar una página interna da 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

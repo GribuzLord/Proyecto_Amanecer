@@ -11,7 +11,14 @@ const AppError = require('./utils/AppError');
 
 const app = express();
 
-app.use(cors());
+// En desarrollo (sin CLIENT_URL definido) se permite cualquier origen.
+// En producción, define CLIENT_URL=https://tu-sitio.netlify.app en tus
+// variables de entorno de Render para que solo tu frontend pueda llamar a la API.
+const corsOptions = process.env.CLIENT_URL
+  ? { origin: process.env.CLIENT_URL }
+  : {};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));

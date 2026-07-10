@@ -79,7 +79,72 @@ Inicia sesión con las credenciales `ADMIN_EMAIL` / `ADMIN_PASSWORD` que
 pusiste en `server/.env`. Desde "Usuarios (admin)" crea cuentas para cada
 congregación/usuario real.
 
-## Qué falta por construir (siguientes pasos sugeridos)
+## Cómo pasar a producción (Netlify + Render + Aiven, todo gratis)
+
+Sigue este orden — cada pieza depende de la anterior.
+
+### Paso 0: sube el proyecto a GitHub
+
+Render y Netlify se conectan directamente a un repositorio de Git. Crea un
+repo (puede ser privado) y sube todo este proyecto (`client/` y `server/`
+juntos está bien, cada plataforma solo mirará su carpeta correspondiente).
+
+### Paso 1: base de datos en Aiven
+
+1. Crea una cuenta gratis en [aiven.io](https://aiven.io) (no pide tarjeta).
+2. Crea un servicio **MySQL** en el plan gratuito.
+3. Cuando esté listo (unos minutos), copia sus datos de conexión: host,
+   puerto, usuario, contraseña y nombre de base de datos.
+4. Conéctate con esos datos (por ejemplo con MySQL Workbench, TablePlus, o
+   `mysql` por consola) y ejecuta tu `server/database/schema.sql` para crear
+   las tablas.
+5. Aiven a veces "apaga" el servicio gratuito tras inactividad — si tu app
+   deja de responder tras varios días sin uso, entra al panel de Aiven y
+   enciéndelo de nuevo.
+
+### Paso 2: backend en Render
+
+1. Crea una cuenta gratis en [render.com](https://render.com) y conéctala a tu GitHub.
+2. "New Web Service" → elige tu repo → cuando te pregunte la carpeta raíz,
+   pon `server` (o deja que Render lea `render.yaml`, que ya está preparado).
+3. Build command: `npm install` — Start command: `npm start`.
+4. En "Environment", agrega las variables de `server/.env.example` con los
+   valores reales de Aiven (y `DB_SSL=true`). `JWT_SECRET` puedes generarlo
+   con Render automáticamente. Deja `CLIENT_URL` vacío por ahora, lo llenas
+   en el paso 4.
+5. Antes de tener el frontend, corre `npm run seed` una vez (Render tiene
+   una consola/"Shell" para tu servicio) para crear tu usuario admin.
+6. Al desplegar, Render te da una URL pública tipo
+   `https://programa-ministerio-api.onrender.com`. Pruébala visitando
+   `/api/health` — debe responder `{"status":"ok"}`.
+7. Recuerda: en el plan gratuito, el servicio se "duerme" tras 15 min sin
+   tráfico. La primera visita después de eso tarda ~30 segundos en responder.
+
+### Paso 3: frontend en Netlify
+
+1. Crea una cuenta gratis en [netlify.com](https://netlify.com) y conéctala a tu GitHub.
+2. "Add new site" → tu repo. Netlify debería detectar automáticamente la
+   configuración de `netlify.toml` (carpeta `client`, comando `npm run build`,
+   carpeta de salida `dist`).
+3. En "Environment variables", agrega `VITE_API_URL` con la URL de tu backend
+   de Render + `/api`, ej: `https://programa-ministerio-api.onrender.com/api`.
+4. Despliega. Netlify te da una URL tipo `https://tu-sitio.netlify.app`.
+
+### Paso 4: cerrar el círculo (CORS)
+
+Vuelve a Render → variables de entorno de tu backend → pon `CLIENT_URL` con
+la URL que te dio Netlify (sin barra final) → guarda (esto redepliega el
+servicio). A partir de aquí, solo tu frontend puede hacer peticiones a tu API.
+
+### Verificación final
+
+- Entra a tu URL de Netlify, inicia sesión con el admin que creaste en el
+  paso 2.6.
+- Prueba crear un usuario, una persona, y generar un programa.
+- Si algo falla, revisa primero la consola del navegador (errores de CORS o
+  de red) y luego los "Logs" de tu servicio en Render.
+
+
 
 1. **Exportación a PDF** (`server/src/services/pdf.service.js` — no
    incluido aún). Sugerencia: usar `puppeteer` para renderizar una

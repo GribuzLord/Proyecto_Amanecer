@@ -1,0 +1,33 @@
+# Render puede leer este archivo automáticamente ("Blueprint") o puedes
+# configurar el servicio manualmente desde su dashboard usando estos mismos valores.
+services:
+  - type: web
+    name: programa-ministerio-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DB_HOST
+        sync: false   # lo pegas manualmente desde el panel de Aiven
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_URL
+        sync: false   # tu URL de Netlify, ej: https://tu-sitio.netlify.app
