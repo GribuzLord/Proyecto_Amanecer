@@ -38,9 +38,9 @@ function getDefaultHabilitaciones(genero, privilegio) {
 
 const getVacio = () => ({
   nombre: '',
-  genero: 'M',
-  privilegio: 'publicador_bautizado',
-  habilitaciones: getDefaultHabilitaciones('M', 'publicador_bautizado')
+  genero: '',
+  privilegio: '',
+  habilitaciones: []
 });
 
 function formatTimeSince(dateString) {
@@ -198,10 +198,12 @@ export default function PersonnelList() {
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Género</label>
               <select
+                required
                 value={form.genero}
                 onChange={handleGeneroChange}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               >
+                <option value="" disabled>Seleccione género</option>
                 <option value="M">Masculino</option>
                 <option value="F">Femenino</option>
               </select>
@@ -209,10 +211,12 @@ export default function PersonnelList() {
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Privilegio</label>
               <select
+                required
                 value={form.privilegio}
                 onChange={handlePrivilegioChange}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               >
+                <option value="" disabled>Seleccione privilegio</option>
                 {PRIVILEGIOS.map((p) => {
                   if (form.genero === 'F' && (p.value === 'anciano' || p.value === 'siervo_ministerial')) {
                     return null;

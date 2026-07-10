@@ -70,11 +70,11 @@ export default function ProgramGenerator() {
 
       <form onSubmit={generar} className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 flex flex-col md:flex-row items-start md:items-end gap-4">
         
-        <div className="flex items-end gap-2 w-full md:w-auto">
+        <div className="flex items-center sm:items-end gap-1 sm:gap-2 w-full md:w-auto">
           <button 
             type="button" 
             onClick={() => shiftWeek(-1)} 
-            className="p-2.5 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 mb-0.5"
+            className="shrink-0 p-2 sm:p-2.5 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 mb-0 sm:mb-0.5 mt-3 sm:mt-0"
             title="Semana anterior"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,30 +82,32 @@ export default function ProgramGenerator() {
             </svg>
           </button>
           
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-slate-500 mb-1">Lunes (Inicio)</label>
-            <input
-              type="date" required
-              value={semanaInicio}
-              onChange={handleInicioChange}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-slate-500 mb-1">Domingo (Fin)</label>
-            <input
-              type="date" required
-              value={semanaFin}
-              onChange={(e) => setSemanaFin(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
+          <div className="flex flex-col sm:flex-row gap-2 flex-1 min-w-0">
+            <div className="flex-1 min-w-0">
+              <label className="block text-xs font-medium text-slate-500 mb-1 truncate">Lunes (Inicio)</label>
+              <input
+                type="date" required
+                value={semanaInicio}
+                onChange={handleInicioChange}
+                className="w-full rounded-lg border border-slate-300 px-2 sm:px-3 py-2 text-sm"
+              />
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <label className="block text-xs font-medium text-slate-500 mb-1 truncate">Domingo (Fin)</label>
+              <input
+                type="date" required
+                value={semanaFin}
+                onChange={(e) => setSemanaFin(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-2 sm:px-3 py-2 text-sm"
+              />
+            </div>
           </div>
 
           <button 
             type="button" 
             onClick={() => shiftWeek(1)} 
-            className="p-2.5 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 mb-0.5"
+            className="shrink-0 p-2 sm:p-2.5 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 mb-0 sm:mb-0.5 mt-3 sm:mt-0"
             title="Semana siguiente"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
