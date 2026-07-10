@@ -49,6 +49,31 @@ export default function PersonnelList() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [filterGenero, setFilterGenero] = useState('');
+  const [filterPrivilegio, setFilterPrivilegio] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'nombre', direction: 'asc' });
+
+  const processedPersonas = personas
+    .filter((p) => (filterGenero ? p.genero === filterGenero : true))
+    .filter((p) => (filterPrivilegio ? p.privilegio === filterPrivilegio : true))
+    .sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
   async function cargar() {
     setLoading(true);
     const { data } = await api.get('/personas');
@@ -185,38 +210,89 @@ export default function PersonnelList() {
         </form>
       )}
 
+      {/* Filtros */}
+      {!loading && personas.length > 0 && (
+        <div className="flex flex-wrap gap-4 mb-4 p-4 bg-white border border-slate-200 rounded-2xl">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-slate-600 font-medium">Género:</label>
+            <select
+              value={filterGenero}
+              onChange={(e) => setFilterGenero(e.target.value)}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+            >
+              <option value="">Todos</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-slate-600 font-medium">Privilegio:</label>
+            <select
+              value={filterPrivilegio}
+              onChange={(e) => setFilterPrivilegio(e.target.value)}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+            >
+              <option value="">Todos</option>
+              {PRIVILEGIOS.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
         {loading ? (
           <p className="p-6 text-sm text-slate-400">Cargando...</p>
         ) : personas.length === 0 ? (
           <p className="p-6 text-sm text-slate-400">Aún no has agregado personal.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-500 text-left">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">Nombre</th>
-                <th className="px-4 py-2.5 font-medium">Género</th>
-                <th className="px-4 py-2.5 font-medium">Privilegio</th>
-                <th className="px-4 py-2.5 font-medium">Habilitaciones</th>
-                <th className="px-4 py-2.5"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {personas.map((p) => (
-                <tr key={p.id}>
-                  <td className="px-4 py-2.5 font-medium text-slate-700">{p.nombre}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{p.genero === 'M' ? 'Masculino' : 'Femenino'}</td>
-                  <td className="px-4 py-2.5 text-slate-500 text-transform capitalize">{p.privilegio.replace(/_/g, ' ')}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{p.habilitaciones.length} partes</td>
-                  <td className="px-4 py-2.5 text-right">
-                    <button onClick={() => eliminar(p.id)} className="text-red-500 hover:underline text-xs font-medium">
-                      Eliminar
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-slate-500 text-left">
+                <tr>
+                  <th 
+                    className="px-4 py-2.5 font-medium cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => requestSort('nombre')}
+                  >
+                    Nombre {sortConfig.key === 'nombre' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    className="px-4 py-2.5 font-medium cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => requestSort('genero')}
+                  >
+                    Género {sortConfig.key === 'genero' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    className="px-4 py-2.5 font-medium cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => requestSort('privilegio')}
+                  >
+                    Privilegio {sortConfig.key === 'privilegio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="px-4 py-2.5 font-medium">Habilitaciones</th>
+                  <th className="px-4 py-2.5"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {processedPersonas.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-2.5 font-medium text-slate-700">{p.nombre}</td>
+                    <td className="px-4 py-2.5 text-slate-500">{p.genero === 'M' ? 'Masculino' : 'Femenino'}</td>
+                    <td className="px-4 py-2.5 text-slate-500 capitalize">{p.privilegio.replace(/_/g, ' ')}</td>
+                    <td className="px-4 py-2.5 text-slate-500">{p.habilitaciones.length} partes</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <button onClick={() => eliminar(p.id)} className="text-red-500 hover:underline text-xs font-medium">
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {processedPersonas.length === 0 && (
+              <p className="p-6 text-sm text-slate-400 text-center">No hay resultados para estos filtros.</p>
+            )}
+          </div>
         )}
       </div>
     </div>
