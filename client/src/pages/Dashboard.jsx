@@ -15,14 +15,14 @@ export default function Dashboard() {
           className="rounded-2xl border border-slate-200 bg-white p-6 hover:border-brand-500 hover:shadow-sm transition-all"
         >
           <h3 className="font-semibold text-slate-800 mb-1">Generar programa</h3>
-          <p className="text-sm text-slate-500">Crea el borrador semi-automático de la semana con un clic.</p>
+          <p className="text-sm text-slate-500">Crea el borrador de la semana con un clic.</p>
         </Link>
 
         <Link
           to="/personal"
           className="rounded-2xl border border-slate-200 bg-white p-6 hover:border-brand-500 hover:shadow-sm transition-all"
         >
-          <h3 className="font-semibold text-slate-800 mb-1">Gestionar personal</h3>
+          <h3 className="font-semibold text-slate-800 mb-1">Gestionar congregación</h3>
           <p className="text-sm text-slate-500">Agrega o edita a las personas y sus habilitaciones.</p>
         </Link>
       </div>

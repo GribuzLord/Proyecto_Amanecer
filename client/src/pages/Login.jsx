@@ -30,7 +30,7 @@ export default function Login() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
       >
-        <h1 className="text-xl font-bold text-slate-800 mb-1">Programa Ministerial</h1>
+        <h1 className="text-xl font-bold text-slate-800 mb-1">Generador de programas semanales</h1>
         <p className="text-sm text-slate-400 mb-6">Inicia sesión con tu cuenta autorizada.</p>
 
         {error && (
