@@ -43,6 +43,37 @@ const getVacio = () => ({
   habilitaciones: getDefaultHabilitaciones('M', 'publicador_bautizado')
 });
 
+function formatTimeSince(dateString) {
+  if (!dateString) return 'Nunca asignado';
+  
+  const date = new Date(dateString);
+  const today = new Date();
+  
+  // Ignorar horas para comparar solo fechas de calendario
+  date.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  
+  const diffTime = today - date;
+  if (diffTime < 0) return 'Asignación futura'; // Por si hay fechas en el futuro
+  
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+  
+  if (diffDays === 0) return 'Hoy';
+  if (diffDays === 1) return 'Ayer';
+  if (diffDays < 7) return `Hace ${diffDays} días`;
+  
+  const diffWeeks = Math.floor(diffDays / 7);
+  if (diffWeeks === 1) return 'Hace 1 semana';
+  if (diffWeeks < 4) return `Hace ${diffWeeks} semanas`;
+  
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths === 1) return 'Hace 1 mes';
+  if (diffMonths < 12) return `Hace ${diffMonths} meses`;
+  
+  const diffYears = Math.floor(diffDays / 365);
+  return `Hace ${diffYears} año${diffYears > 1 ? 's' : ''}`;
+}
+
 export default function PersonnelList() {
   const [personas, setPersonas] = useState([]);
   const [form, setForm] = useState(getVacio());
@@ -57,6 +88,11 @@ export default function PersonnelList() {
     .filter((p) => (filterGenero ? p.genero === filterGenero : true))
     .filter((p) => (filterPrivilegio ? p.privilegio === filterPrivilegio : true))
     .sort((a, b) => {
+      if (sortConfig.key === 'ultima_asignacion') {
+        const dateA = a.ultima_asignacion ? new Date(a.ultima_asignacion).getTime() : 0;
+        const dateB = b.ultima_asignacion ? new Date(b.ultima_asignacion).getTime() : 0;
+        return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+      }
       if (a[sortConfig.key] < b[sortConfig.key]) {
         return sortConfig.direction === 'asc' ? -1 : 1;
       }
@@ -269,6 +305,12 @@ export default function PersonnelList() {
                   >
                     Privilegio {sortConfig.key === 'privilegio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
+                  <th 
+                    className="px-4 py-2.5 font-medium cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => requestSort('ultima_asignacion')}
+                  >
+                    Última asig. {sortConfig.key === 'ultima_asignacion' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
                   <th className="px-4 py-2.5 font-medium">Habilitaciones</th>
                   <th className="px-4 py-2.5"></th>
                 </tr>
@@ -279,6 +321,11 @@ export default function PersonnelList() {
                     <td className="px-4 py-2.5 font-medium text-slate-700">{p.nombre}</td>
                     <td className="px-4 py-2.5 text-slate-500">{p.genero === 'M' ? 'Masculino' : 'Femenino'}</td>
                     <td className="px-4 py-2.5 text-slate-500 capitalize">{p.privilegio.replace(/_/g, ' ')}</td>
+                    <td className="px-4 py-2.5 text-slate-500">
+                      <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${!p.ultima_asignacion ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {formatTimeSince(p.ultima_asignacion)}
+                      </span>
+                    </td>
                     <td className="px-4 py-2.5 text-slate-500">{p.habilitaciones.length} partes</td>
                     <td className="px-4 py-2.5 text-right">
                       <button onClick={() => eliminar(p.id)} className="text-red-500 hover:underline text-xs font-medium">
