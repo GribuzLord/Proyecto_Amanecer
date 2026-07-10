@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
 const { User } = require('../models');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
@@ -44,10 +45,24 @@ exports.updateUser = catchAsync(async (req, res, next) => {
   const user = await User.findByPk(req.params.id);
   if (!user) return next(new AppError('Usuario no encontrado.', 404));
 
-  const { nombre, nombreCongregacion, activo } = req.body;
-  await user.update({ nombre, nombreCongregacion, activo });
+  const { nombre, email, password, nombreCongregacion, activo } = req.body;
+  const updateData = { nombre, nombreCongregacion };
+  
+  if (activo !== undefined) updateData.activo = activo;
 
-  res.status(200).json({ status: 'success', user });
+  if (email && email !== user.email) {
+    const existente = await User.findOne({ where: { email, id: { [Op.ne]: user.id } } });
+    if (existente) return next(new AppError('Ya existe otro usuario con ese correo.', 400));
+    updateData.email = email;
+  }
+
+  if (password) {
+    updateData.passwordHash = await bcrypt.hash(password, 12);
+  }
+
+  await user.update(updateData);
+
+  res.status(200).json({ status: 'success', user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, activo: user.activo } });
 });
 
 // DELETE /api/users/:id

@@ -7,6 +7,7 @@ export default function UsersAdmin() {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState(vacio);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   async function cargar() {
     const { data } = await api.get('/users');
@@ -15,12 +16,36 @@ export default function UsersAdmin() {
 
   useEffect(() => { cargar(); }, []);
 
-  async function crear(e) {
+  async function guardar(e) {
     e.preventDefault();
-    await api.post('/users', form);
-    setForm(vacio);
-    setShowForm(false);
-    cargar();
+    try {
+      if (editingId) {
+        const payload = { ...form };
+        if (!payload.password) delete payload.password; // Don't send empty string to avoid hashing empty string
+        await api.patch(`/users/${editingId}`, payload);
+      } else {
+        await api.post('/users', form);
+      }
+      setForm(vacio);
+      setEditingId(null);
+      setShowForm(false);
+      cargar();
+    } catch (err) {
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      }
+    }
+  }
+
+  function editar(u) {
+    setEditingId(u.id);
+    setForm({
+      nombre: u.nombre,
+      email: u.email,
+      password: '', // Dejar en blanco para no mostrar el hash y permitir que sea opcional
+      nombreCongregacion: u.nombreCongregacion || ''
+    });
+    setShowForm(true);
   }
 
   async function toggleActivo(u) {
@@ -33,7 +58,13 @@ export default function UsersAdmin() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-800">Usuarios autorizados</h2>
         <button
-          onClick={() => setShowForm((s) => !s)}
+          onClick={() => {
+            if (showForm) {
+              setForm(vacio);
+              setEditingId(null);
+            }
+            setShowForm((s) => !s);
+          }}
           className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg"
         >
           {showForm ? 'Cancelar' : '+ Nuevo usuario'}
@@ -41,21 +72,22 @@ export default function UsersAdmin() {
       </div>
 
       {showForm && (
-        <form onSubmit={crear} className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={guardar} className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <input placeholder="Nombre" required value={form.nombre}
             onChange={(e) => setForm({ ...form, nombre: e.target.value })}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
           <input placeholder="Correo" type="email" required value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          <input placeholder="Contraseña temporal" type="text" required value={form.password}
+          <input placeholder={editingId ? "Nueva contraseña (opcional)" : "Contraseña temporal"} 
+            type="text" required={!editingId} value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
           <input placeholder="Nombre de la congregación" value={form.nombreCongregacion}
             onChange={(e) => setForm({ ...form, nombreCongregacion: e.target.value })}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          <button className="sm:col-span-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">
-            Crear usuario
+          <button className="sm:col-span-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+            {editingId ? 'Guardar cambios' : 'Crear usuario'}
           </button>
         </form>
       )}
@@ -83,8 +115,11 @@ export default function UsersAdmin() {
                       {u.activo ? 'activo' : 'inactivo'}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-right">
-                    <button onClick={() => toggleActivo(u)} className="text-brand-600 hover:underline text-xs font-medium">
+                  <td className="px-4 py-2.5 text-right space-x-3">
+                    <button onClick={() => editar(u)} className="text-slate-500 hover:text-slate-700 hover:underline text-xs font-medium">
+                      Editar
+                    </button>
+                    <button onClick={() => toggleActivo(u)} className={`${u.activo ? 'text-amber-600 hover:text-amber-700' : 'text-green-600 hover:text-green-700'} hover:underline text-xs font-medium`}>
                       {u.activo ? 'Desactivar' : 'Activar'}
                     </button>
                   </td>
