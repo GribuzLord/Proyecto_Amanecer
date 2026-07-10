@@ -63,3 +63,15 @@ exports.finalizarPrograma = catchAsync(async (req, res, next) => {
 exports.exportarPdf = catchAsync(async (req, res, next) => {
   return next(new AppError('Exportación a PDF pendiente de implementar (ver services/pdf.service.js).', 501));
 });
+
+// DELETE /api/programas/:id
+exports.deletePrograma = catchAsync(async (req, res, next) => {
+  const programa = await Programa.findOne({
+    where: { id: req.params.id, userId: req.user.id },
+  });
+
+  if (!programa) return next(new AppError('Programa no encontrado.', 404));
+
+  await programa.destroy();
+  res.status(204).json({ status: 'success', data: null });
+});

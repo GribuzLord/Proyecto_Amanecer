@@ -1,84 +1,280 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState, useMemo } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import api from '../../api/axios';
+
+const codigosSinTitulo = [
+  'presidente',
+  'consejero_auxiliar',
+  'perlas_escondidas',
+  'lectura_biblia',
+  'conversaciones_1',
+  'conversaciones_2',
+  'estudio_congregacion',
+  'lector_estudio',
+  'oracion_final',
+  'presidente_atalaya',
+  'conductor_atalaya',
+  'lector_atalaya',
+  'oracion_final_atalaya'
+];
 
 export default function ProgramEditor() {
   const { id } = useParams();
   const [programa, setPrograma] = useState(null);
+  const [personnel, setPersonnel] = useState([]);
+  const [finalizarModal, setFinalizarModal] = useState(false);
 
   async function cargar() {
-    const { data } = await api.get(`/programas/${id}`);
-    setPrograma(data.programa);
+    const [progRes, persRes] = await Promise.all([
+      api.get(`/programas/${id}`),
+      api.get('/personas')
+    ]);
+    setPrograma(progRes.data.programa);
+    setPersonnel(persRes.data.personas);
   }
 
   useEffect(() => { cargar(); }, [id]);
 
   async function guardarParte(parte, cambios) {
+    if (programa.estado !== 'borrador') return;
+
+    if (cambios.personaId !== undefined) {
+      if (cambios.personaId === '') {
+        cambios.personaId = null;
+        cambios.textoLibre = 'Por asignar';
+      } else {
+        cambios.textoLibre = null;
+      }
+    }
+
+    // Solo guardar si realmente hubo un cambio para evitar llamadas innecesarias al blur
+    if (cambios.titulo !== undefined && cambios.titulo === (parte.titulo || '')) return;
+
     await api.patch(`/programas/${id}/partes/${parte.id}`, cambios);
     cargar();
   }
 
-  async function finalizar() {
-    if (!confirm('Al finalizar, se actualizará el historial de rotación del personal. ¿Continuar?')) return;
+  async function confirmarFinalizar() {
     await api.post(`/programas/${id}/finalizar`);
+    setFinalizarModal(false);
     cargar();
   }
 
-  if (!programa) return <p className="text-sm text-slate-400">Cargando...</p>;
+  const secciones = useMemo(() => {
+    if (!programa) return {};
+    return programa.partes.reduce((acc, parte) => {
+      const sec = parte.tipoParte.seccion;
+      if (!acc[sec]) acc[sec] = [];
+      acc[sec].push(parte);
+      return acc;
+    }, {});
+  }, [programa]);
+
+  const habilitacionesMap = {
+    'presidente': ['Presidente'],
+    'consejero_auxiliar': ['Consejero_sala_auxiliar'],
+    'tesoro_1': ['Tesoros_de_la_biblia (1)'],
+    'perlas_escondidas': ['Perlas_escondidas'],
+    'lectura_biblia': ['Lectura_de_la_biblia'],
+    'conversaciones_1': ['Primera_conversación'],
+    'conversaciones_2': ['Segunda_conversación'],
+    'discurso_estudiante': ['Tercera_conversación', 'Discurso_estudiante'],
+    'vida_cristiana_tema': ['Vida_cristiana (7)'],
+    'estudio_congregacion': ['Estudio_del_libro'],
+    'lector_estudio': ['Lector_libro'],
+    'oracion_final': ['Oracion_final'],
+    'presidente_atalaya': ['Presidente'],
+    'conductor_atalaya': ['Conductor_atalaya'],
+    'lector_atalaya': ['Lector_atalaya'],
+    'oracion_final_atalaya': ['Oracion_final']
+  };
+
+  const getCandidatos = (tipoParte) => {
+    return personnel.filter(p => {
+      if (!p.activo) return false;
+      if (tipoParte.restriccionGenero !== 'ninguna' && p.genero !== tipoParte.restriccionGenero) return false;
+      const habs = p.habilitaciones || [];
+      // Verificar si tiene alguna de las habilitaciones mapeadas para este tipo de parte
+      const requeridas = habilitacionesMap[tipoParte.codigo] || [tipoParte.codigo];
+      return requeridas.some(req => habs.includes(req));
+    });
+  };
+
+  const getTiempoTranscurrido = (fechaStr) => {
+    if (!fechaStr) return '(Nunca)';
+    const ultima = new Date(fechaStr);
+    const ahora = new Date();
+    ultima.setHours(0, 0, 0, 0);
+    ahora.setHours(0, 0, 0, 0);
+    
+    const diffTime = ahora - ultima;
+    if (diffTime < 0) return '(Próximamente)';
+    
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 7) return '(Esta semana)';
+    if (diffDays < 30) {
+      const semanas = Math.floor(diffDays / 7);
+      return `(Hace ${semanas} sem)`;
+    }
+    const meses = Math.floor(diffDays / 30);
+    return `(Hace ${meses} mes${meses > 1 ? 'es' : ''})`;
+  };
+
+  if (!programa) return (
+    <div className="flex justify-center py-12">
+      <p className="text-sm text-slate-400 font-medium animate-pulse">Cargando programa...</p>
+    </div>
+  );
+
+  const seccionConfig = {
+    encabezado: { titulo: 'Presidente y Oraciones', bg: 'bg-slate-700', text: 'text-white' },
+    tesoros: { titulo: 'Tesoros de la biblia', bg: 'bg-[#3C7F8B]', text: 'text-white' },
+    maestros: { titulo: 'Seamos Mejores Maestros', bg: 'bg-amber-600', text: 'text-white' },
+    vida_cristiana: { titulo: 'Nuestra Vida Cristiana', bg: 'bg-rose-700', text: 'text-white' },
+    atalaya: { titulo: 'Estudio de La Atalaya', bg: 'bg-slate-700', text: 'text-white' },
+  };
+
+  const orderSecciones = ['encabezado', 'tesoros', 'maestros', 'vida_cristiana', 'atalaya'];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-5xl mx-auto pb-12">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">
-            Semana {programa.semanaInicio} — {programa.semanaFin}
+          <Link to="/programas" className="text-slate-400 hover:text-brand-600 hover:underline text-sm mb-1 inline-block transition-colors">
+            ← Volver a programas
+          </Link>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+            Semana del {programa.semanaInicio.split('-').reverse().join('/')} al {programa.semanaFin.split('-').reverse().join('/')}
           </h2>
-          <p className="text-sm text-slate-500">
-            Estado: <span className="font-medium">{programa.estado}</span>
+          <p className="text-sm mt-2 flex items-center gap-2">
+            <span className="text-slate-500">Estado:</span>
+            <span className={`font-semibold px-2.5 py-0.5 rounded-full text-xs uppercase tracking-wider ${programa.estado === 'borrador' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+              {programa.estado === 'borrador' ? 'Borrador' : 'Finalizado'}
+            </span>
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full md:w-auto">
           {programa.estado === 'borrador' && (
             <button
-              onClick={finalizar}
-              className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg"
+              onClick={() => setFinalizarModal(true)}
+              className="flex-1 md:flex-none bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
               Finalizar
             </button>
           )}
-          {/* TODO: conectar a GET /api/programas/:id/pdf cuando pdf.service.js esté implementado */}
-          <button className="border border-slate-300 text-slate-600 text-sm font-semibold px-4 py-2 rounded-lg">
-            Descargar PDF
+          <button className="flex-1 md:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            PDF
           </button>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100">
-        {programa.partes.map((parte) => (
-          <div key={parte.id} className="p-4 flex flex-wrap items-center gap-3">
-            <div className="w-56 shrink-0">
-              <p className="text-sm font-medium text-slate-700">{parte.tipoParte.nombre}</p>
-              <p className="text-xs text-slate-400">
-                {parte.sala !== 'unica' ? `Sala ${parte.sala} · ` : ''}{parte.rolSlot}
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        {orderSecciones.map(secKey => {
+          const partesSec = secciones[secKey];
+          if (!partesSec || partesSec.length === 0) return null;
+
+          const config = seccionConfig[secKey];
+
+          return (
+            <div key={secKey}>
+              <div className={`${config.bg} ${config.text} px-5 py-2.5 font-bold uppercase tracking-widest text-xs`}>
+                {config.titulo}
+              </div>
+              <div className="divide-y divide-slate-100">
+                {partesSec.map((parte) => {
+                  const candidatos = getCandidatos(parte.tipoParte);
+                  const mostrarTitulo = !codigosSinTitulo.includes(parte.tipoParte.codigo);
+
+                  return (
+                    <div key={parte.id} className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 hover:bg-slate-50/50 transition-colors">
+                      <div className="w-full lg:w-1/3 shrink-0">
+                        <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                          {parte.tipoParte.nombre}
+                          {parte.sala === 'auxiliar' && (
+                            <span className="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider whitespace-nowrap">
+                              Sala Auxiliar
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-1">
+                          {parte.sala === 'principal' ? `Sala Principal · ` : ''}{parte.rolSlot}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-3 flex-1 justify-end min-w-0">
+                        {mostrarTitulo && (
+                          <input
+                            placeholder="Título / tema de la asignación"
+                            defaultValue={parte.titulo || ''}
+                            onBlur={(e) => guardarParte(parte, { titulo: e.target.value })}
+                            className="flex-1 min-w-0 rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 transition-shadow text-ellipsis"
+                            disabled={programa.estado !== 'borrador'}
+                          />
+                        )}
+
+                        <div className={`relative w-full ${mostrarTitulo ? 'sm:w-72' : 'sm:w-1/2'} shrink-0`}>
+                          <select
+                            value={parte.personaId || ''}
+                            onChange={(e) => guardarParte(parte, { personaId: e.target.value })}
+                            className="w-full appearance-none rounded-xl border border-slate-300 px-4 py-2.5 pr-10 text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none font-medium text-slate-700 disabled:bg-slate-50 disabled:text-slate-500 transition-shadow text-ellipsis"
+                            disabled={programa.estado !== 'borrador'}
+                          >
+                            <option value="" className="text-slate-400">-- Por asignar --</option>
+                            {candidatos.map(c => (
+                              <option key={c.id} value={c.id}>
+                                {c.nombre} {getTiempoTranscurrido(c.ultimaAsignacion)}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {finalizarModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Finalizar programa</h3>
+              <p className="text-sm text-slate-500">
+                Al finalizar el programa, se actualizará el historial de rotación del personal para que no se les asigne repetidamente. 
+                Aún podrás hacer modificaciones manuales si lo necesitas. ¿Deseas continuar?
               </p>
             </div>
-
-            <input
-              placeholder="Título / tema (editable)"
-              defaultValue={parte.titulo || ''}
-              onBlur={(e) => guardarParte(parte, { titulo: e.target.value })}
-              className="flex-1 min-w-[160px] rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
-            />
-
-            <input
-              placeholder="Nombre asignado"
-              defaultValue={parte.persona?.nombre || parte.textoLibre || ''}
-              onBlur={(e) => guardarParte(parte, { textoLibre: e.target.value })}
-              className="w-56 rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
-            />
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setFinalizarModal(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={confirmarFinalizar}
+                className="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors shadow-sm"
+              >
+                Sí, finalizar
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

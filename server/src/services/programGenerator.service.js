@@ -1,6 +1,25 @@
 const { Op } = require('sequelize');
 const { Persona, TipoParte, Programa, PartePrograma } = require('../models');
 
+const habilitacionesMap = {
+  'presidente': ['Presidente'],
+  'consejero_auxiliar': ['Consejero_sala_auxiliar'],
+  'tesoro_1': ['Tesoros_de_la_biblia (1)'],
+  'perlas_escondidas': ['Perlas_escondidas'],
+  'lectura_biblia': ['Lectura_de_la_biblia'],
+  'conversaciones_1': ['Primera_conversación'],
+  'conversaciones_2': ['Segunda_conversación'],
+  'discurso_estudiante': ['Tercera_conversación', 'Discurso_estudiante'],
+  'vida_cristiana_tema': ['Vida_cristiana (7)'],
+  'estudio_congregacion': ['Estudio_del_libro'],
+  'lector_estudio': ['Lector_libro'],
+  'oracion_final': ['Oracion_final'],
+  'presidente_atalaya': ['Presidente'],
+  'conductor_atalaya': ['Conductor_atalaya'],
+  'lector_atalaya': ['Lector_atalaya'],
+  'oracion_final_atalaya': ['Oracion_final']
+};
+
 /**
  * Busca la mejor persona disponible para un tipo de parte dado.
  * Criterio de "rotación equitativa": prioriza a quien tiene más tiempo
@@ -30,7 +49,11 @@ async function encontrarCandidato(userId, tipoParte, excluidos = []) {
     ],
   });
 
-  return candidatos.find((p) => (p.habilitaciones || []).includes(tipoParte.codigo)) || null;
+  const requeridas = habilitacionesMap[tipoParte.codigo] || [tipoParte.codigo];
+  return candidatos.find((p) => {
+    const habs = p.habilitaciones || [];
+    return requeridas.some(req => habs.includes(req));
+  }) || null;
 }
 
 /**

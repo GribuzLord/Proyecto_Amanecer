@@ -12,5 +12,6 @@ router.get('/:id', programController.getPrograma);
 router.get('/:id/pdf', programController.exportarPdf);
 router.post('/:id/finalizar', programController.finalizarPrograma);
 router.patch('/:id/partes/:parteId', programController.updateParte);
+router.delete('/:id', programController.deletePrograma);
 
 module.exports = router;

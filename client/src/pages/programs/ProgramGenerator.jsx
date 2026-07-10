@@ -13,6 +13,7 @@ export default function ProgramGenerator() {
   const [semanaInicio, setSemanaInicio] = useState('');
   const [semanaFin, setSemanaFin] = useState('');
   const [generando, setGenerando] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ show: false, id: null, semanaStr: '' });
 
   async function cargar() {
     const { data } = await api.get('/programas');
@@ -21,16 +22,16 @@ export default function ProgramGenerator() {
 
   useEffect(() => {
     cargar();
-    
+
     // Inicializar con el próximo lunes
     const now = new Date();
     const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0));
     const dayOfWeek = today.getUTCDay();
     const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
-    
+
     today.setUTCDate(today.getUTCDate() + daysUntilMonday);
     const startStr = today.toISOString().split('T')[0];
-    
+
     setSemanaInicio(startStr);
     setSemanaFin(addDays(startStr, 6));
   }, []);
@@ -61,6 +62,26 @@ export default function ProgramGenerator() {
     }
   }
 
+  function openDeleteModal(p, formatD) {
+    setDeleteModal({ show: true, id: p.id, semanaStr: `${formatD(p.semanaInicio)} - ${formatD(p.semanaFin)}` });
+  }
+
+  function closeDeleteModal() {
+    setDeleteModal({ show: false, id: null, semanaStr: '' });
+  }
+
+  async function confirmarEliminar() {
+    if (!deleteModal.id) return;
+    try {
+      await api.delete(`/programas/${deleteModal.id}`);
+      closeDeleteModal();
+      cargar();
+    } catch (error) {
+      console.error(error);
+      alert('Hubo un error al eliminar el programa.');
+    }
+  }
+
   return (
     <div>
       <h2 className="text-xl font-bold text-slate-800 mb-1">Programas</h2>
@@ -69,11 +90,11 @@ export default function ProgramGenerator() {
       </p>
 
       <form onSubmit={generar} className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 flex flex-col md:flex-row items-start md:items-end gap-4">
-        
+
         <div className="flex items-center sm:items-end gap-1 sm:gap-2 w-full md:w-auto">
-          <button 
-            type="button" 
-            onClick={() => shiftWeek(-1)} 
+          <button
+            type="button"
+            onClick={() => shiftWeek(-1)}
             className="shrink-0 p-2 sm:p-2.5 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 mb-0 sm:mb-0.5 mt-3 sm:mt-0"
             title="Semana anterior"
           >
@@ -81,7 +102,7 @@ export default function ProgramGenerator() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          
+
           <div className="flex flex-col sm:flex-row gap-2 flex-1 min-w-0">
             <div className="flex-1 min-w-0">
               <label className="block text-xs font-medium text-slate-500 mb-1 truncate">Lunes (Inicio)</label>
@@ -92,7 +113,7 @@ export default function ProgramGenerator() {
                 className="w-full rounded-lg border border-slate-300 px-2 sm:px-3 py-2 text-sm"
               />
             </div>
-            
+
             <div className="flex-1 min-w-0">
               <label className="block text-xs font-medium text-slate-500 mb-1 truncate">Domingo (Fin)</label>
               <input
@@ -104,9 +125,9 @@ export default function ProgramGenerator() {
             </div>
           </div>
 
-          <button 
-            type="button" 
-            onClick={() => shiftWeek(1)} 
+          <button
+            type="button"
+            onClick={() => shiftWeek(1)}
             className="shrink-0 p-2 sm:p-2.5 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 mb-0 sm:mb-0.5 mt-3 sm:mt-0"
             title="Semana siguiente"
           >
@@ -140,32 +161,75 @@ export default function ProgramGenerator() {
               <tbody className="divide-y divide-slate-100">
                 {programas.map((p) => {
                   const formatD = (dStr) => {
-                    if(!dStr) return '';
+                    if (!dStr) return '';
                     const [y, m, d] = dStr.split('-');
                     return `${d}/${m}/${y}`;
                   };
                   return (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-2.5 text-slate-700 font-medium">{formatD(p.semanaInicio)} — {formatD(p.semanaFin)}</td>
-                    <td className="px-4 py-2.5">
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        p.estado === 'finalizado' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {p.estado === 'borrador' ? 'Borrador' : 'Finalizado'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
-                      <Link to={`/programas/${p.id}`} className="inline-block bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
-                        Editar →
-                      </Link>
-                    </td>
-                  </tr>
-                )})}
+                    <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-2.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5">
+                          <span className="text-slate-700 font-medium">{formatD(p.semanaInicio)}</span>
+                          <span className="hidden sm:inline text-slate-400">—</span>
+                          <span className="text-slate-500 text-xs sm:text-sm sm:text-slate-700 sm:font-medium">{formatD(p.semanaFin)}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${p.estado === 'finalizado' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                          }`}>
+                          {p.estado === 'borrador' ? 'Borrador' : 'Finalizado'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right space-x-4 whitespace-nowrap">
+                        <Link to={`/programas/${p.id}`} className="inline-block bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+                          Editar →
+                        </Link>
+                        <button onClick={() => openDeleteModal(p, formatD)} className="text-red-500 hover:underline text-xs font-medium px-2">
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
+
+      {/* Modal de confirmación para eliminar */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Eliminar programa</h3>
+              <p className="text-sm text-slate-500">
+                ¿Estás seguro de que deseas eliminar el programa de la semana del <strong className="text-slate-700">{deleteModal.semanaStr}</strong>?
+                Esta acción no se puede deshacer y se borrarán todas las asignaciones de esa semana.
+              </p>
+            </div>
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={closeDeleteModal}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarEliminar}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
