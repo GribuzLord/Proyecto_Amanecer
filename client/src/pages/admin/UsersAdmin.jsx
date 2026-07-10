@@ -61,36 +61,38 @@ export default function UsersAdmin() {
       )}
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-left">
-            <tr>
-              <th className="px-4 py-2.5 font-medium">Nombre</th>
-              <th className="px-4 py-2.5 font-medium">Correo</th>
-              <th className="px-4 py-2.5 font-medium">Congregación</th>
-              <th className="px-4 py-2.5 font-medium">Estado</th>
-              <th className="px-4 py-2.5"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td className="px-4 py-2.5 font-medium text-slate-700">{u.nombre}</td>
-                <td className="px-4 py-2.5 text-slate-500">{u.email}</td>
-                <td className="px-4 py-2.5 text-slate-500">{u.nombreCongregacion || '—'}</td>
-                <td className="px-4 py-2.5">
-                  <span className={`text-xs px-2 py-1 rounded-full ${u.activo ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                    {u.activo ? 'activo' : 'inactivo'}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 text-right">
-                  <button onClick={() => toggleActivo(u)} className="text-brand-600 hover:underline text-xs font-medium">
-                    {u.activo ? 'Desactivar' : 'Activar'}
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-slate-500 text-left">
+              <tr>
+                <th className="px-4 py-2.5 font-medium">Nombre</th>
+                <th className="px-4 py-2.5 font-medium">Correo</th>
+                <th className="px-4 py-2.5 font-medium">Congregación</th>
+                <th className="px-4 py-2.5 font-medium">Estado</th>
+                <th className="px-4 py-2.5"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td className="px-4 py-2.5 font-medium text-slate-700 whitespace-nowrap">{u.nombre}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{u.email}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{u.nombreCongregacion || '—'}</td>
+                  <td className="px-4 py-2.5">
+                    <span className={`text-xs px-2 py-1 rounded-full ${u.activo ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {u.activo ? 'activo' : 'inactivo'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <button onClick={() => toggleActivo(u)} className="text-brand-600 hover:underline text-xs font-medium">
+                      {u.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
