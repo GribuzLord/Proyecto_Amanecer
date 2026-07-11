@@ -37,7 +37,7 @@ async function generarPdfAcomodadores(userId, year, month) {
   // Fechas del mes
   const fechasEntreSemana = getDatesForDay(year, month, user.diaEntreSemana);
   const fechasFinSemana = getDatesForDay(year, month, user.diaFinSemana);
-  
+
   // Juntar todas y ordenarlas
   const allDates = [...fechasEntreSemana, ...fechasFinSemana].sort((a, b) => a - b);
 
@@ -81,7 +81,7 @@ async function generarPdfAcomodadores(userId, year, month) {
 
     // Buscar si hay programa para esta semana
     const prog = programas.find(p => p.semanaInicio <= dateStr && p.semanaFin >= dateStr);
-    
+
     const ocupadosIds = new Set();
     if (prog) {
       prog.partes.forEach(parte => {
@@ -101,7 +101,7 @@ async function generarPdfAcomodadores(userId, year, month) {
         disponibles = lista.filter(p => !excluidosExtra.has(p.id));
       }
       if (disponibles.length === 0) return null; // Nadie existe
-      
+
       // Ordenar por ultima_asignacion_acomodador
       disponibles.sort((a, b) => {
         if (!a.ultimaAsignacionAcomodador) return -1;
@@ -196,8 +196,17 @@ async function generarPdfAcomodadores(userId, year, month) {
         <table>
           <thead>
             <tr>
-              <th>📅 Fecha</th>
-              <th>🚪 Puerta principal</th>
+              <th>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  Fecha
+                </div>
+              </th>
+              <th>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAdhAAAHYQGVw7i2AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAVZJREFUWIXt1ztLJEEUhuHHyypeYEUWBEVMxGUQAwWRSTYzFmPXzMBQ/AEm/gIjwUAxNjE2ESMTEwMvKGrmYqAYyIB3gypBRtq2ZWBw6Q+KLrrrfPVS3V11DlVWXQU8xnGL668E1yTc/4PiJz3mcIdNLGArC0DSCiygEyU0pbQiCtFrHlMR6BAPaQBJK7COFexhMMVjGT24in6jmMEQlrCIf0nB9SnmsxjByQdjGt70n7ER2+8IsoOulHneaR1jAv10ythLtCc8+ynl46zNSlZp5QA5QA5QSYAeDFcLoEPY8dbwtxoALXjCOX5lCUw7Cz6rU0wKr2G1GgCEAyiz/qu/IAfIAXKA7wnwWhc04yheoVUot37gMfaT1Cbs/1doFNLxAvoxIGTX5ZlxCX0ovS1MWuOEWXWCbfSiG2fYx4FQ2OzioizmHjckV0ZZNCGs0D6Oo/n30QuM1Tnqi+CJyQAAAABJRU5ErkJggg==" width="22" height="22" alt="puerta" style="filter: brightness(0) invert(1);" />                  Puerta principal
+                </div>
+              </th>
               <th>◀ Lado izquierdo</th>
               <th>▶ Lado derecho</th>
             </tr>
@@ -216,7 +225,7 @@ async function generarPdfAcomodadores(userId, year, month) {
       </div>
       
       <div class="footer">
-        <div class="verse">"Todo debe hacerse decentemente y con orden."</div>
+        <div class="verse">"Háganlo todo de forma digna y ordenada."</div>
         <div class="ref">1 Corintios 14:40</div>
       </div>
     </div>
@@ -227,7 +236,7 @@ async function generarPdfAcomodadores(userId, year, month) {
   const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0' });
-  
+
   const pdfBuffer = await page.pdf({
     format: 'Letter',
     printBackground: true,

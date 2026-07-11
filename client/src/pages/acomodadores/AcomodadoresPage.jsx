@@ -125,6 +125,7 @@ export default function AcomodadoresPage() {
       a.download = `Acomodadores-${selectedMonth.month + 1}-${selectedMonth.year}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
+      setGenerating(false);
     } catch (err) {
       console.error(err);
       setGenerating(false);

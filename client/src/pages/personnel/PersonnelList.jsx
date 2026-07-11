@@ -365,13 +365,13 @@ export default function PersonnelList() {
                       {p.genero === 'M' ? (
                         <button 
                           onClick={async () => {
-                            const newValue = !p.apoya_acomodador;
-                            setPersonas(personas.map(per => per.id === p.id ? { ...per, apoya_acomodador: newValue } : per));
+                            const newValue = !p.apoyaAcomodador;
+                            setPersonas(personas.map(per => per.id === p.id ? { ...per, apoyaAcomodador: newValue } : per));
                             await api.patch(`/personas/${p.id}`, { apoyaAcomodador: newValue });
                           }}
-                          className={`inline-block px-2 py-1 rounded-md text-xs font-bold transition-colors ${p.apoya_acomodador ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                          className={`inline-block px-2 py-1 rounded-md text-xs font-bold transition-colors ${p.apoyaAcomodador ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                         >
-                          {p.apoya_acomodador ? 'Sí' : 'No'}
+                          {p.apoyaAcomodador ? 'Sí' : 'No'}
                         </button>
                       ) : (
                         <span className="text-slate-300">-</span>
