@@ -2,6 +2,7 @@ const { Programa, PartePrograma } = require('../models');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const { generarPrograma, finalizarPrograma } = require('../services/programGenerator.service');
+const { generateProgramPDF } = require('../services/pdfGenerator.service');
 
 // GET /api/programas
 exports.getAllProgramas = catchAsync(async (req, res) => {
@@ -58,10 +59,17 @@ exports.finalizarPrograma = catchAsync(async (req, res, next) => {
 });
 
 // GET /api/programas/:id/pdf
-// TODO: usar el servicio de PDF (puppeteer) para renderizar una plantilla
-// HTML con los datos del programa y devolver el archivo generado.
 exports.exportarPdf = catchAsync(async (req, res, next) => {
-  return next(new AppError('Exportación a PDF pendiente de implementar (ver services/pdf.service.js).', 501));
+  const programa = await Programa.findOne({
+    where: { id: req.params.id, userId: req.user.id },
+  });
+  if (!programa) return next(new AppError('Programa no encontrado.', 404));
+
+  const pdfBuffer = await generateProgramPDF(req.params.id);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="programa-${programa.semanaInicio}.pdf"`);
+  res.send(pdfBuffer);
 });
 
 // DELETE /api/programas/:id

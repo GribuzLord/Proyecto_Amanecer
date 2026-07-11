@@ -23,6 +23,7 @@ export default function ProgramEditor() {
   const [programa, setPrograma] = useState(null);
   const [personnel, setPersonnel] = useState([]);
   const [finalizarModal, setFinalizarModal] = useState(false);
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
 
   async function cargar() {
     const [progRes, persRes] = await Promise.all([
@@ -58,6 +59,26 @@ export default function ProgramEditor() {
     await api.post(`/programas/${id}/finalizar`);
     setFinalizarModal(false);
     cargar();
+  }
+
+  async function descargarPDF() {
+    try {
+      setDescargandoPdf(true);
+      const response = await api.get(`/programas/${id}/pdf`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `programa-${programa.semanaInicio}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error descargando el PDF:', error);
+      alert('Hubo un error al generar el PDF. Por favor intenta de nuevo.');
+    } finally {
+      setDescargandoPdf(false);
+    }
   }
 
   const secciones = useMemo(() => {
@@ -164,9 +185,20 @@ export default function ProgramEditor() {
               Finalizar
             </button>
           )}
-          <button className="flex-1 md:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            PDF
+          <button 
+            onClick={descargarPDF}
+            disabled={descargandoPdf}
+            className="flex-1 md:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {descargandoPdf ? (
+              <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            )}
+            {descargandoPdf ? 'Generando...' : 'PDF'}
           </button>
         </div>
       </div>
