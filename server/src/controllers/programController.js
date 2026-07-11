@@ -3,6 +3,7 @@ const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const { generarPrograma, finalizarPrograma } = require('../services/programGenerator.service');
 const { generateProgramPDF } = require('../services/pdfGenerator.service');
+const { generateSlipsPDF } = require('../services/slipsGenerator.service');
 
 // GET /api/programas
 exports.getAllProgramas = catchAsync(async (req, res) => {
@@ -83,6 +84,20 @@ exports.exportarPdf = catchAsync(async (req, res, next) => {
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="programa-${programa.semanaInicio}.pdf"`);
+  res.send(pdfBuffer);
+});
+
+// GET /api/programas/:id/hojitas
+exports.exportarHojitasPdf = catchAsync(async (req, res, next) => {
+  const programa = await Programa.findOne({
+    where: { id: req.params.id, userId: req.user.id },
+  });
+  if (!programa) return next(new AppError('Programa no encontrado.', 404));
+
+  const pdfBuffer = await generateSlipsPDF(req.params.id);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="hojitas-S89-${programa.semanaInicio}.pdf"`);
   res.send(pdfBuffer);
 });
 

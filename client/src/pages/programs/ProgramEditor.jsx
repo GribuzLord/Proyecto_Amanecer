@@ -24,6 +24,7 @@ export default function ProgramEditor() {
   const [personnel, setPersonnel] = useState([]);
   const [finalizarModal, setFinalizarModal] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
+  const [descargandoHojitas, setDescargandoHojitas] = useState(false);
 
   async function cargar() {
     const [progRes, persRes] = await Promise.all([
@@ -81,6 +82,26 @@ export default function ProgramEditor() {
     }
   }
 
+  async function descargarHojitas() {
+    try {
+      setDescargandoHojitas(true);
+      const response = await api.get(`/programas/${id}/hojitas`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `hojitas-S89-${programa.semanaInicio}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error descargando hojitas:', error);
+      alert('Hubo un error al generar las hojitas. Por favor intenta de nuevo.');
+    } finally {
+      setDescargandoHojitas(false);
+    }
+  }
+
   const secciones = useMemo(() => {
     if (!programa) return {};
     return programa.partes.reduce((acc, parte) => {
@@ -127,12 +148,12 @@ export default function ProgramEditor() {
     const ahora = new Date();
     ultima.setHours(0, 0, 0, 0);
     ahora.setHours(0, 0, 0, 0);
-    
+
     const diffTime = ahora - ultima;
     if (diffTime < 0) return '(Próximamente)';
-    
+
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 7) return '(Esta semana)';
     if (diffDays < 30) {
       const semanas = Math.floor(diffDays / 7);
@@ -185,16 +206,22 @@ export default function ProgramEditor() {
           </p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          {programa.estado === 'borrador' && (
-            <button
-              onClick={() => setFinalizarModal(true)}
-              className="flex-1 md:flex-none bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-              Finalizar
-            </button>
-          )}
-          <button 
+          <button
+            onClick={descargarHojitas}
+            disabled={descargandoHojitas}
+            className="flex-1 md:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {descargandoHojitas ? (
+              <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+            )}
+            {descargandoHojitas ? 'Generando...' : 'Hojitas (S-89)'}
+          </button>
+          <button
             onClick={descargarPDF}
             disabled={descargandoPdf}
             className="flex-1 md:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -209,6 +236,16 @@ export default function ProgramEditor() {
             )}
             {descargandoPdf ? 'Generando...' : 'PDF'}
           </button>
+          {programa.estado === 'borrador' && (
+            <button
+              onClick={() => setFinalizarModal(true)}
+              className="flex-1 md:flex-none bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+              Finalizar
+            </button>
+          )}
+
         </div>
       </div>
 
@@ -252,7 +289,6 @@ export default function ProgramEditor() {
                             defaultValue={parte.titulo || ''}
                             onBlur={(e) => guardarParte(parte, { titulo: e.target.value })}
                             className="flex-1 min-w-0 rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 transition-shadow text-ellipsis"
-                            disabled={programa.estado !== 'borrador'}
                           />
                         )}
 
@@ -261,7 +297,6 @@ export default function ProgramEditor() {
                             value={parte.personaId || ''}
                             onChange={(e) => guardarParte(parte, { personaId: e.target.value })}
                             className="w-full appearance-none rounded-xl border border-slate-300 px-4 py-2.5 pr-10 text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none font-medium text-slate-700 disabled:bg-slate-50 disabled:text-slate-500 transition-shadow text-ellipsis"
-                            disabled={programa.estado !== 'borrador'}
                           >
                             <option value="" className="text-slate-400">-- Por asignar --</option>
                             {candidatos.map(c => (
@@ -299,7 +334,6 @@ export default function ProgramEditor() {
             placeholder="Ej: Grupo 1"
             value={programa.grupoAseo || ''}
             onChange={(e) => handleAseoChange(e.target.value)}
-            disabled={programa.estado !== 'borrador'}
           />
         </div>
       </div>
@@ -315,18 +349,18 @@ export default function ProgramEditor() {
               </div>
               <h3 className="text-lg font-bold text-slate-800 mb-2">Finalizar programa</h3>
               <p className="text-sm text-slate-500">
-                Al finalizar el programa, se actualizará el historial de rotación del personal para que no se les asigne repetidamente. 
+                Al finalizar el programa, se actualizará el historial de rotación del personal para que no se les asigne repetidamente.
                 Aún podrás hacer modificaciones manuales si lo necesitas. ¿Deseas continuar?
               </p>
             </div>
             <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setFinalizarModal(false)}
                 className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 onClick={confirmarFinalizar}
                 className="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors shadow-sm"
               >
