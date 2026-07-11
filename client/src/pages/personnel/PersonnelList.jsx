@@ -90,9 +90,9 @@ export default function PersonnelList() {
     .filter((p) => (filterGenero ? p.genero === filterGenero : true))
     .filter((p) => (filterPrivilegio ? p.privilegio === filterPrivilegio : true))
     .sort((a, b) => {
-      if (sortConfig.key === 'ultima_asignacion') {
-        const dateA = a.ultima_asignacion ? new Date(a.ultima_asignacion).getTime() : 0;
-        const dateB = b.ultima_asignacion ? new Date(b.ultima_asignacion).getTime() : 0;
+      if (sortConfig.key === 'ultimaAsignacion') {
+        const dateA = a.ultimaAsignacion ? new Date(a.ultimaAsignacion).getTime() : 0;
+        const dateB = b.ultimaAsignacion ? new Date(b.ultimaAsignacion).getTime() : 0;
         return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
       }
       if (a[sortConfig.key] < b[sortConfig.key]) {
@@ -336,9 +336,9 @@ export default function PersonnelList() {
                   </th>
                   <th 
                     className="px-4 py-2.5 font-medium cursor-pointer hover:bg-slate-100 transition-colors"
-                    onClick={() => requestSort('ultima_asignacion')}
+                    onClick={() => requestSort('ultimaAsignacion')}
                   >
-                    Última asig. {sortConfig.key === 'ultima_asignacion' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    Última asig. {sortConfig.key === 'ultimaAsignacion' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
                   <th 
                     className="px-4 py-2.5 font-medium cursor-pointer hover:bg-slate-100 transition-colors"
@@ -357,8 +357,8 @@ export default function PersonnelList() {
                     <td className="px-4 py-2.5 text-slate-500">{p.genero === 'M' ? 'Masculino' : 'Femenino'}</td>
                     <td className="px-4 py-2.5 text-slate-500 capitalize">{p.privilegio.replace(/_/g, ' ')}</td>
                     <td className="px-4 py-2.5 text-slate-500">
-                      <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${!p.ultima_asignacion ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                        {formatTimeSince(p.ultima_asignacion)}
+                      <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${!p.ultimaAsignacion ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {formatTimeSince(p.ultimaAsignacion)}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-slate-500">
