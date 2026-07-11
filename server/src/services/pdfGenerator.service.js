@@ -109,14 +109,23 @@ async function generateProgramPDF(programaId) {
   Object.values(maestrosGroups).forEach((group, idx) => {
     // Si requiere ayudante (Ej: conversaciones_1)
     const partes = group.partes;
-    const isDiscurso = group.nombre.toLowerCase().includes('discurso');
+    const isDiscursoEstudiante = partes.some(p => p.tipoParte.codigo === 'discurso_estudiante');
+    let groupName = group.nombre;
+    if (isDiscursoEstudiante && programa.esDiscursoMaestros) {
+      groupName = 'Discurso';
+    }
+    const isDiscurso = groupName.toLowerCase().includes('discurso');
     
     let principalText = '';
     let auxiliarText = '';
 
     const getPair = (sala) => {
       const titular = partes.find(p => p.sala === sala && p.rolSlot === 'titular')?.persona?.nombre || '---';
-      const ayudante = partes.find(p => p.sala === sala && p.rolSlot === 'ayudante')?.persona?.nombre;
+      const isDiscursoEstudiante = partes.some(p => p.tipoParte.codigo === 'discurso_estudiante');
+      let ayudante = null;
+      if (!isDiscursoEstudiante || !programa.esDiscursoMaestros) {
+        ayudante = partes.find(p => p.sala === sala && p.rolSlot === 'ayudante')?.persona?.nombre;
+      }
       return ayudante ? `${titular} / ${ayudante}` : titular;
     };
 
@@ -125,7 +134,7 @@ async function generateProgramPDF(programaId) {
 
     maestrosHTML += `
     <div style="margin-bottom: 8px;">
-      <div style="color: #B57F24; font-size: 16px;">${partNumber}. ${group.nombre}</div>
+      <div style="color: #B57F24; font-size: 16px;">${partNumber}. ${groupName}</div>
       <div style="display: flex; justify-content: space-around; margin-top: 5px; font-size: 13px;">
         ${principalText ? `
         <div style="text-align: center;">

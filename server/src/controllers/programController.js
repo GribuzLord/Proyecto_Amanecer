@@ -59,8 +59,8 @@ exports.updatePrograma = catchAsync(async (req, res, next) => {
   });
   if (!programa) return next(new AppError('Programa no encontrado.', 404));
 
-  const { grupoAseo } = req.body;
-  await programa.update({ grupoAseo });
+  const { grupoAseo, esDiscursoMaestros } = req.body;
+  await programa.update({ grupoAseo, esDiscursoMaestros });
 
   res.status(200).json({ status: 'success', programa });
 });

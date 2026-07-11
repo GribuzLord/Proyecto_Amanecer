@@ -9,6 +9,7 @@ const Programa = sequelize.define('Programa', {
   estado: { type: DataTypes.ENUM('borrador', 'finalizado'), defaultValue: 'borrador' },
   grupoAseo: { type: DataTypes.STRING(255), field: 'grupo_aseo' },
   pdfPath: { type: DataTypes.STRING(255), field: 'pdf_path' },
+  esDiscursoMaestros: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'es_discurso_maestros' },
 }, {
   tableName: 'programas',
 });

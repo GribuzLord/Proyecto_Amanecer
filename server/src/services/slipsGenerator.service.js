@@ -101,7 +101,12 @@ async function generateSlipsPDF(programaId) {
     if (!grupos[key]) grupos[key] = { tipo: p.tipoParte, sala: p.sala, titular: null, ayudante: null, titulo: p.titulo };
 
     if (p.rolSlot === 'titular') grupos[key].titular = p.persona?.nombre || '';
-    if (p.rolSlot === 'ayudante') grupos[key].ayudante = p.persona?.nombre || '';
+    if (p.rolSlot === 'ayudante') {
+      const isDiscursoEstudiante = p.tipoParte.codigo === 'discurso_estudiante';
+      if (!isDiscursoEstudiante || !programa.esDiscursoMaestros) {
+        grupos[key].ayudante = p.persona?.nombre || '';
+      }
+    }
   });
 
   const asignaciones = [];
@@ -111,10 +116,12 @@ async function generateSlipsPDF(programaId) {
     const esDiscursoOPresentacion = grupo.tipo.nombre.toLowerCase().includes('discurso') || grupo.tipo.nombre.toLowerCase().includes('presentación');
 
     let tipoIntervencion = grupo.tipo.nombre;
-    if (grupo.titulo) {
-      tipoIntervencion = grupo.titulo;
+    if (grupo.titulo && (!programa.esDiscursoMaestros || grupo.tipo.codigo !== 'discurso_estudiante')) {
+       tipoIntervencion = grupo.titulo;
     } else if (grupo.tipo.codigo === 'lectura_biblia') {
-      tipoIntervencion = 'Lectura de la Biblia';
+       tipoIntervencion = 'Lectura de la Biblia';
+    } else if (grupo.tipo.codigo === 'discurso_estudiante' && programa.esDiscursoMaestros) {
+       tipoIntervencion = 'Discurso';
     }
 
     // Hoja para el Titular

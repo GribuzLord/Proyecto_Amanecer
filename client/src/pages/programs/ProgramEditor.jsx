@@ -38,8 +38,6 @@ export default function ProgramEditor() {
   useEffect(() => { cargar(); }, [id]);
 
   async function guardarParte(parte, cambios) {
-    if (programa.estado !== 'borrador') return;
-
     if (cambios.personaId !== undefined) {
       if (cambios.personaId === '') {
         cambios.personaId = null;
@@ -134,7 +132,11 @@ export default function ProgramEditor() {
   const getCandidatos = (tipoParte) => {
     return personnel.filter(p => {
       if (!p.activo) return false;
-      if (tipoParte.restriccionGenero !== 'ninguna' && p.genero !== tipoParte.restriccionGenero) return false;
+      let restriccion = tipoParte.restriccionGenero;
+      if (tipoParte.codigo === 'discurso_estudiante' && programa?.esDiscursoMaestros) {
+        restriccion = 'M';
+      }
+      if (restriccion !== 'ninguna' && p.genero !== restriccion) return false;
       const habs = p.habilitaciones || [];
       // Verificar si tiene alguna de las habilitaciones mapeadas para este tipo de parte
       const requeridas = habilitacionesMap[tipoParte.codigo] || [tipoParte.codigo];
@@ -262,11 +264,17 @@ export default function ProgramEditor() {
                 {config.titulo}
               </div>
               <div className="divide-y divide-slate-100">
-                {partesSec.map((parte) => {
-                  const candidatos = getCandidatos(parte.tipoParte);
-                  const mostrarTitulo = !codigosSinTitulo.includes(parte.tipoParte.codigo);
+                {partesSec.map((parte, index) => {
+                  if (parte.tipoParte.codigo === 'discurso_estudiante' && programa.esDiscursoMaestros && parte.rolSlot === 'ayudante') {
+                    return null;
+                  }
 
-                  return (
+                  const candidatos = getCandidatos(parte.tipoParte);
+                  const mostrarTitulo = !codigosSinTitulo.includes(parte.tipoParte.codigo) && !(parte.tipoParte.codigo === 'discurso_estudiante' && programa.esDiscursoMaestros);
+
+                  const isFirstDiscurso = parte.tipoParte.codigo === 'discurso_estudiante' && partesSec.findIndex(p => p.tipoParte.codigo === 'discurso_estudiante') === index;
+
+                  const content = (
                     <div key={parte.id} className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 hover:bg-slate-50/50 transition-colors">
                       <div className="w-full lg:w-1/3 shrink-0">
                         <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -312,6 +320,32 @@ export default function ProgramEditor() {
                       </div>
                     </div>
                   );
+
+                  if (isFirstDiscurso) {
+                    return (
+                      <div key={'toggle-' + parte.id} className="divide-y divide-slate-100">
+                        <div className="p-5 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100">
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">¿La última asignación de Maestros será un Discurso?</p>
+                            <p className="text-xs text-slate-500 mt-0.5">Si se marca que sí, se eliminarán los ayudantes, el título, y se restringirá a varones.</p>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              const newValue = !programa.esDiscursoMaestros;
+                              setPrograma({ ...programa, esDiscursoMaestros: newValue });
+                              await api.patch(`/programas/${id}`, { esDiscursoMaestros: newValue });
+                            }}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 ${programa.esDiscursoMaestros ? 'bg-brand-600' : 'bg-slate-200'}`}
+                          >
+                            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${programa.esDiscursoMaestros ? 'translate-x-5' : 'translate-x-0'}`} />
+                          </button>
+                        </div>
+                        {content}
+                      </div>
+                    );
+                  }
+
+                  return content;
                 })}
               </div>
             </div>
