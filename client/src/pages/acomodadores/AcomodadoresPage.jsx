@@ -37,6 +37,11 @@ export default function AcomodadoresPage() {
 
   const [generating, setGenerating] = useState(false);
   const [programasMes, setProgramasMes] = useState([]);
+  
+  // States for Modals/Alerts
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'success' | 'error'
+  const [confirmModal, setConfirmModal] = useState({ show: false, expected: 0, current: 0 });
+  const [errorModal, setErrorModal] = useState({ show: false, message: '' });
 
   useEffect(() => {
     async function loadConfig() {
@@ -75,29 +80,37 @@ export default function AcomodadoresPage() {
 
   async function handleSaveConfig() {
     setSavingConfig(true);
+    setSaveStatus(null);
     try {
       await api.patch('/users/me/config', {
         diaEntreSemana: config.diaEntreSemana,
         diaFinSemana: config.diaFinSemana === 0 ? 7 : config.diaFinSemana // El server quiza espera 7 para domingo
       });
-      alert('Configuración guardada exitosamente.');
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus(null), 3000);
     } catch (err) {
       console.error(err);
-      alert('Error al guardar configuración.');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(null), 3000);
     } finally {
       setSavingConfig(false);
     }
   }
 
-  async function handleGenerate() {
+  async function handleGenerateClick() {
     // Validar si el mes esta completo
     const expectedMeetings = countMeetingsInMonth(selectedMonth.year, selectedMonth.month, config.diaEntreSemana);
     
     if (programasMes.length < expectedMeetings) {
-      const confirm = window.confirm(`Atención: Solo hay ${programasMes.length} programas registrados en este mes y se esperaban ${expectedMeetings}. ¿Deseas generar el programa de acomodadores de todas formas?`);
-      if (!confirm) return;
+      setConfirmModal({ show: true, expected: expectedMeetings, current: programasMes.length });
+      return;
     }
+    
+    await proceedGenerate();
+  }
 
+  async function proceedGenerate() {
+    setConfirmModal({ show: false, expected: 0, current: 0 });
     setGenerating(true);
     try {
       const response = await api.get(`/acomodadores/generar-pdf?year=${selectedMonth.year}&month=${selectedMonth.month}`, {
@@ -114,9 +127,20 @@ export default function AcomodadoresPage() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      alert('Error al generar el PDF de acomodadores.');
-    } finally {
       setGenerating(false);
+      
+      let errorMessage = 'Error al generar el PDF de acomodadores.';
+      if (err.response && err.response.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          if (json.message) errorMessage = json.message;
+        } catch (e) {
+          console.error('No se pudo parsear el error blob:', e);
+        }
+      }
+      
+      setErrorModal({ show: true, message: errorMessage });
     }
   }
 
@@ -156,13 +180,17 @@ export default function AcomodadoresPage() {
                   {DAYS_OF_WEEK.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                 </select>
               </div>
-              <button
-                onClick={handleSaveConfig}
-                disabled={savingConfig}
-                className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap"
-              >
-                {savingConfig ? 'Guardando...' : 'Guardar'}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleSaveConfig}
+                  disabled={savingConfig}
+                  className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap h-[38px] flex items-center justify-center min-w-[100px]"
+                >
+                  {savingConfig ? 'Guardando...' : 'Guardar'}
+                </button>
+                {saveStatus === 'success' && <span className="text-xs text-green-600 font-medium text-center">¡Guardado!</span>}
+                {saveStatus === 'error' && <span className="text-xs text-red-600 font-medium text-center">Error al guardar</span>}
+              </div>
             </div>
           )}
         </div>
@@ -197,7 +225,7 @@ export default function AcomodadoresPage() {
             </div>
             
             <button
-              onClick={handleGenerate}
+              onClick={handleGenerateClick}
               disabled={generating}
               className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-8 py-2.5 rounded-lg transition-colors flex items-center gap-2"
             >
@@ -225,6 +253,67 @@ export default function AcomodadoresPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación para mes incompleto */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Programas Incompletos</h3>
+              <p className="text-sm text-slate-500 mb-4">
+                Atención: Solo hay <strong>{confirmModal.current}</strong> programas de entre semana registrados en este mes y se esperaban <strong>{confirmModal.expected}</strong> según tu configuración.
+              </p>
+              <p className="text-sm text-slate-500">
+                ¿Deseas generar el programa de acomodadores de todas formas?
+              </p>
+            </div>
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setConfirmModal({ show: false, expected: 0, current: 0 })}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={proceedGenerate}
+                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm"
+              >
+                Sí, generar de todos modos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Error (e.g. sin acomodadores) */}
+      {errorModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">No se pudo generar</h3>
+              <p className="text-sm text-slate-600 mb-6">
+                {errorModal.message}
+              </p>
+              <button 
+                onClick={() => setErrorModal({ show: false, message: '' })}
+                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-2.5 rounded-xl transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

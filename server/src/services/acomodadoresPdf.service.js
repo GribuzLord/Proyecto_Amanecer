@@ -5,6 +5,7 @@ const { format } = require('date-fns');
 const { es } = require('date-fns/locale');
 const { User, Persona, Programa, PartePrograma, TipoParte } = require('../models');
 const { Op } = require('sequelize');
+const AppError = require('../utils/AppError');
 
 const jsDayMap = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0 };
 
@@ -43,8 +44,12 @@ async function generarPdfAcomodadores(userId, year, month) {
   // Obtener personas
   const personas = await Persona.findAll({
     where: { userId, activo: true, apoyaAcomodador: true },
-    order: [['ultima_asignacion_acomodador', 'ASC NULLS FIRST'], ['nombre', 'ASC']]
+    order: [['ultima_asignacion_acomodador', 'ASC'], ['nombre', 'ASC']]
   });
+
+  if (personas.length < 3) {
+    throw new AppError('No tienes suficientes varones habilitados como acomodadores. Ve a la sección de Hermanos y habilita la casilla "¿Apoya como acomodador?" en al menos tres personas.', 400);
+  }
 
   const principales = personas.filter(p => p.privilegio === 'anciano' || p.privilegio === 'siervo_ministerial');
   const pasillos = [...personas]; // Todos pueden ser pasillo
