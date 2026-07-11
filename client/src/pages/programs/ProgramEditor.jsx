@@ -144,6 +144,32 @@ export default function ProgramEditor() {
     });
   };
 
+  const getDuplicateWarning = (parte, secKey, partesSec) => {
+    if (!parte.personaId) return null;
+    
+    if (secKey === 'atalaya') {
+      const duplicados = partesSec.filter(p => p.id !== parte.id && p.personaId === parte.personaId);
+      if (duplicados.length > 0) {
+        return "⚠️ Esta persona ya tiene otra participación en La Atalaya.";
+      }
+    }
+
+    if (secKey === 'maestros') {
+      const duplicados = partesSec.filter(p => p.id !== parte.id && p.personaId === parte.personaId);
+      if (duplicados.length > 0) {
+        // Checar si es el mismo tema en la misma sala (significa que es el ayudante de sí mismo)
+        const mismoTema = duplicados.find(p => p.tipoParte.codigo === parte.tipoParte.codigo && p.sala === parte.sala);
+        if (mismoTema) {
+          return "⚠️ El titular y el ayudante no pueden ser la misma persona.";
+        }
+        // Si es otro tema o en otra sala, es que pasa dos veces
+        return "⚠️ Esta persona ya tiene otra participación en la sección de Maestros.";
+      }
+    }
+
+    return null;
+  };
+
   const getTiempoTranscurrido = (fechaStr) => {
     if (!fechaStr) return '(Nunca)';
     const ultima = new Date(fechaStr);
@@ -275,8 +301,9 @@ export default function ProgramEditor() {
                   const isFirstDiscurso = parte.tipoParte.codigo === 'discurso_estudiante' && partesSec.findIndex(p => p.tipoParte.codigo === 'discurso_estudiante') === index;
 
                   const content = (
-                    <div key={parte.id} className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 hover:bg-slate-50/50 transition-colors">
-                      <div className="w-full lg:w-1/3 shrink-0">
+                    <div key={parte.id}>
+                      <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 hover:bg-slate-50/50 transition-colors">
+                        <div className="w-full lg:w-1/3 shrink-0">
                         <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
                           {parte.tipoParte.nombre}
                           {parte.sala === 'auxiliar' && (
@@ -319,7 +346,13 @@ export default function ProgramEditor() {
                         </div>
                       </div>
                     </div>
-                  );
+                    {getDuplicateWarning(parte, secKey, partesSec) && (
+                      <div className="px-5 pb-4 -mt-2 lg:text-right">
+                        <p className="text-xs text-red-500 font-semibold">{getDuplicateWarning(parte, secKey, partesSec)}</p>
+                      </div>
+                    )}
+                  </div>
+                );
 
                   if (isFirstDiscurso) {
                     return (
