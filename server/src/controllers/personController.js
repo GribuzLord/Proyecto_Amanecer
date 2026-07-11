@@ -16,7 +16,7 @@ exports.getAllPersonas = catchAsync(async (req, res) => {
 
 // POST /api/personas
 exports.createPersona = catchAsync(async (req, res, next) => {
-  const { nombre, genero, privilegio, habilitaciones } = req.body;
+  const { nombre, genero, privilegio, habilitaciones, apoyaAcomodador } = req.body;
   if (!nombre || !genero) {
     return next(new AppError('Nombre y género son obligatorios.', 400));
   }
@@ -27,6 +27,7 @@ exports.createPersona = catchAsync(async (req, res, next) => {
     genero,
     privilegio,
     habilitaciones: habilitaciones || [],
+    apoyaAcomodador: apoyaAcomodador || false,
   });
 
   res.status(201).json({ status: 'success', persona });
@@ -34,11 +35,11 @@ exports.createPersona = catchAsync(async (req, res, next) => {
 
 // PATCH /api/personas/:id
 exports.updatePersona = catchAsync(async (req, res, next) => {
+  const { nombre, genero, privilegio, habilitaciones, activo, apoyaAcomodador } = req.body;
   const persona = await Persona.findOne({ where: { id: req.params.id, userId: req.user.id } });
   if (!persona) return next(new AppError('Persona no encontrada.', 404));
 
-  const { nombre, genero, privilegio, habilitaciones, activo } = req.body;
-  await persona.update({ nombre, genero, privilegio, habilitaciones, activo });
+  await persona.update({ nombre, genero, privilegio, habilitaciones, activo, apoyaAcomodador });
 
   res.status(200).json({ status: 'success', persona });
 });

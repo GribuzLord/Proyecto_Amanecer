@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const personRoutes = require('./routes/person.routes');
 const programRoutes = require('./routes/program.routes');
+const acomodadoresRoutes = require('./routes/acomodadores.routes');
 const errorMiddleware = require('./middleware/error.middleware');
 const AppError = require('./utils/AppError');
 
@@ -27,6 +28,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/personas', personRoutes);
 app.use('/api/programas', programRoutes);
+app.use('/api/acomodadores', acomodadoresRoutes);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Ruta no encontrada: ${req.originalUrl}`, 404));

@@ -33,6 +33,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         <NavLink to="/" end className={linkClass} onClick={() => setIsOpen(false)}>Panel</NavLink>
         <NavLink to="/personal" className={linkClass} onClick={() => setIsOpen(false)}>Hermanos</NavLink>
         <NavLink to="/programas" className={linkClass} onClick={() => setIsOpen(false)}>Programas</NavLink>
+        <NavLink to="/acomodadores" className={linkClass} onClick={() => setIsOpen(false)}>Acomodadores</NavLink>
         {user?.rol === 'admin' && (
           <NavLink to="/admin/usuarios" className={linkClass} onClick={() => setIsOpen(false)}>Usuarios (admin)</NavLink>
         )}

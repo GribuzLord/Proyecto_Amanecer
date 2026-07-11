@@ -4,7 +4,28 @@ const { User } = require('../models');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 
-// Todas estas rutas están protegidas y restringidas a rol 'admin' (ver routes/user.routes.js)
+// Todas estas rutas están protegidas y restringidas a rol 'admin' (ver routes/user.routes.js), excepto getMe y updateMyConfig
+
+exports.getMe = catchAsync(async (req, res, next) => {
+  const user = await User.findByPk(req.user.id, {
+    attributes: ['id', 'nombre', 'email', 'nombreCongregacion', 'diaEntreSemana', 'diaFinSemana']
+  });
+  res.status(200).json({ status: 'success', user });
+});
+
+exports.updateMyConfig = catchAsync(async (req, res, next) => {
+  const user = await User.findByPk(req.user.id);
+  if (!user) return next(new AppError('Usuario no encontrado.', 404));
+
+  const { diaEntreSemana, diaFinSemana } = req.body;
+  
+  if (diaEntreSemana !== undefined) user.diaEntreSemana = diaEntreSemana;
+  if (diaFinSemana !== undefined) user.diaFinSemana = diaFinSemana;
+  
+  await user.save();
+  
+  res.status(200).json({ status: 'success', user: { diaEntreSemana: user.diaEntreSemana, diaFinSemana: user.diaFinSemana } });
+});
 
 // GET /api/users
 exports.getAllUsers = catchAsync(async (req, res) => {

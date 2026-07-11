@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import PersonnelList from './pages/personnel/PersonnelList';
 import ProgramGenerator from './pages/programs/ProgramGenerator';
 import ProgramEditor from './pages/programs/ProgramEditor';
+import AcomodadoresPage from './pages/acomodadores/AcomodadoresPage';
 import UsersAdmin from './pages/admin/UsersAdmin';
 import AppLayout from './components/Layout/AppLayout';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -27,6 +28,10 @@ export default function App() {
 
       <Route path="/programas/:id" element={
         <ProtectedRoute><AppLayout><ProgramEditor /></AppLayout></ProtectedRoute>
+      } />
+
+      <Route path="/acomodadores" element={
+        <ProtectedRoute><AppLayout><AcomodadoresPage /></AppLayout></ProtectedRoute>
       } />
 
       <Route path="/admin/usuarios" element={

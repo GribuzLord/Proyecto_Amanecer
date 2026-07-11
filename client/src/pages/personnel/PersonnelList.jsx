@@ -40,7 +40,8 @@ const getVacio = () => ({
   nombre: '',
   genero: '',
   privilegio: '',
-  habilitaciones: []
+  habilitaciones: [],
+  apoyaAcomodador: false
 });
 
 function formatTimeSince(dateString) {
@@ -237,6 +238,20 @@ export default function PersonnelList() {
             </div>
           </div>
 
+          {form.genero === 'M' && (
+            <div className="mb-4">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.apoyaAcomodador}
+                  onChange={(e) => setForm({ ...form, apoyaAcomodador: e.target.checked })}
+                  className="rounded text-brand-600 focus:ring-brand-500 cursor-pointer"
+                />
+                ¿Apoya como acomodador?
+              </label>
+            </div>
+          )}
+
           <label className="block text-sm font-medium text-slate-600 mb-2">Partes que puede realizar (se auto-asignan por defecto)</label>
           <div className="flex flex-wrap gap-2 mb-4">
             {HABILITACIONES.map((h) => (
@@ -325,6 +340,12 @@ export default function PersonnelList() {
                   >
                     Última asig. {sortConfig.key === 'ultima_asignacion' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
+                  <th 
+                    className="px-4 py-2.5 font-medium cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => requestSort('apoyaAcomodador')}
+                  >
+                    ¿Acomodador? {sortConfig.key === 'apoyaAcomodador' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
                   <th className="px-4 py-2.5 font-medium">Habilitaciones</th>
                   <th className="px-4 py-2.5"></th>
                 </tr>
@@ -339,6 +360,22 @@ export default function PersonnelList() {
                       <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${!p.ultima_asignacion ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
                         {formatTimeSince(p.ultima_asignacion)}
                       </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-slate-500">
+                      {p.genero === 'M' ? (
+                        <button 
+                          onClick={async () => {
+                            const newValue = !p.apoya_acomodador;
+                            setPersonas(personas.map(per => per.id === p.id ? { ...per, apoya_acomodador: newValue } : per));
+                            await api.patch(`/personas/${p.id}`, { apoyaAcomodador: newValue });
+                          }}
+                          className={`inline-block px-2 py-1 rounded-md text-xs font-bold transition-colors ${p.apoya_acomodador ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                        >
+                          {p.apoya_acomodador ? 'Sí' : 'No'}
+                        </button>
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-slate-500">{p.habilitaciones.length} partes</td>
                     <td className="px-4 py-2.5 text-right">
