@@ -142,6 +142,15 @@ export default function ProgramEditor() {
     return `(Hace ${meses} mes${meses > 1 ? 'es' : ''})`;
   };
 
+  async function handleAseoChange(nuevoAseo) {
+    setPrograma(prev => ({ ...prev, grupoAseo: nuevoAseo }));
+    try {
+      await api.patch(`/programas/${id}`, { grupoAseo: nuevoAseo });
+    } catch (err) {
+      console.error('Error guardando aseo:', err);
+    }
+  }
+
   if (!programa) return (
     <div className="flex justify-center py-12">
       <p className="text-sm text-slate-400 font-medium animate-pulse">Cargando programa...</p>
@@ -273,6 +282,26 @@ export default function ProgramEditor() {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+          Aseo y Hospitalidad
+        </h3>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Grupo asignado
+          </label>
+          <input
+            type="text"
+            className="w-full sm:w-1/2 md:w-1/3 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
+            placeholder="Ej: Grupo 1"
+            value={programa.grupoAseo || ''}
+            onChange={(e) => handleAseoChange(e.target.value)}
+            disabled={programa.estado !== 'borrador'}
+          />
+        </div>
       </div>
 
       {finalizarModal && (

@@ -50,6 +50,20 @@ exports.updateParte = catchAsync(async (req, res, next) => {
   res.status(200).json({ status: 'success', parte });
 });
 
+// PATCH /api/programas/:id
+// Permite actualizar campos del programa, como grupoAseo
+exports.updatePrograma = catchAsync(async (req, res, next) => {
+  const programa = await Programa.findOne({
+    where: { id: req.params.id, userId: req.user.id },
+  });
+  if (!programa) return next(new AppError('Programa no encontrado.', 404));
+
+  const { grupoAseo } = req.body;
+  await programa.update({ grupoAseo });
+
+  res.status(200).json({ status: 'success', programa });
+});
+
 // POST /api/programas/:id/finalizar
 // Congela el programa y actualiza el historial de rotación de cada persona
 exports.finalizarPrograma = catchAsync(async (req, res, next) => {

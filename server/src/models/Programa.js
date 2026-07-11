@@ -7,6 +7,7 @@ const Programa = sequelize.define('Programa', {
   semanaInicio: { type: DataTypes.DATEONLY, allowNull: false, field: 'semana_inicio' },
   semanaFin: { type: DataTypes.DATEONLY, allowNull: false, field: 'semana_fin' },
   estado: { type: DataTypes.ENUM('borrador', 'finalizado'), defaultValue: 'borrador' },
+  grupoAseo: { type: DataTypes.STRING(255), field: 'grupo_aseo' },
   pdfPath: { type: DataTypes.STRING(255), field: 'pdf_path' },
 }, {
   tableName: 'programas',

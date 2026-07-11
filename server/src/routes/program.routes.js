@@ -10,6 +10,7 @@ router.get('/', programController.getAllProgramas);
 router.post('/generar', programController.generarPrograma);
 router.get('/:id', programController.getPrograma);
 router.get('/:id/pdf', programController.exportarPdf);
+router.patch('/:id', programController.updatePrograma);
 router.post('/:id/finalizar', programController.finalizarPrograma);
 router.patch('/:id/partes/:parteId', programController.updateParte);
 router.delete('/:id', programController.deletePrograma);

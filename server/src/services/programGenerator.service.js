@@ -77,31 +77,25 @@ async function generarPrograma({ userId, semanaInicio, semanaFin }) {
     const salas = tipo.requiereSala ? ['principal', 'auxiliar'] : ['unica'];
 
     for (const sala of salas) {
-      const candidato = await encontrarCandidato(userId, tipo, [...usadosEnEstaSemana]);
-      if (candidato) usadosEnEstaSemana.add(candidato.id);
-
       await PartePrograma.create({
         programaId: programa.id,
         tipoParteId: tipo.id,
         titulo: null, // el usuario lo completa/edita en el frontend (ej. "No tengas miedo")
         sala,
         rolSlot: 'titular',
-        personaId: candidato ? candidato.id : null,
-        textoLibre: candidato ? null : 'Por asignar',
+        personaId: null,
+        textoLibre: 'Por asignar',
         orden: tipo.orden,
       });
 
       if (tipo.requiereAyudante) {
-        const ayudante = await encontrarCandidato(userId, tipo, [...usadosEnEstaSemana]);
-        if (ayudante) usadosEnEstaSemana.add(ayudante.id);
-
         await PartePrograma.create({
           programaId: programa.id,
           tipoParteId: tipo.id,
           sala,
           rolSlot: 'ayudante',
-          personaId: ayudante ? ayudante.id : null,
-          textoLibre: ayudante ? null : 'Por asignar',
+          personaId: null,
+          textoLibre: 'Por asignar',
           orden: tipo.orden,
         });
       }

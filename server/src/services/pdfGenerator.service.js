@@ -265,6 +265,10 @@ async function generateProgramPDF(programaId) {
           <div>${oracAtalaya}</div>
         </div>
       </div>
+      ${programa.grupoAseo ? `
+      <div style="text-align: center; font-weight: bold; font-size: 16px; margin-top: 15px;">
+        Aseo y hospitalidad – ${programa.grupoAseo}
+      </div>` : ''}
     </div>
   </body>
   </html>
