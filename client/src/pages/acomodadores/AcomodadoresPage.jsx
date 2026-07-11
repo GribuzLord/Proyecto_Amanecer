@@ -48,8 +48,8 @@ export default function AcomodadoresPage() {
       try {
         const { data } = await api.get('/users/me');
         setConfig({
-          diaEntreSemana: data.user.diaEntreSemana === 7 ? 0 : data.user.diaEntreSemana, // Manejo de fallback por si era 7
-          diaFinSemana: data.user.diaFinSemana === 7 ? 0 : data.user.diaFinSemana
+          diaEntreSemana: data.user.diaEntreSemana != null ? (data.user.diaEntreSemana === 7 ? 0 : data.user.diaEntreSemana) : 3,
+          diaFinSemana: data.user.diaFinSemana != null ? (data.user.diaFinSemana === 7 ? 0 : data.user.diaFinSemana) : 0
         });
       } catch (err) {
         console.error(err);
@@ -160,7 +160,7 @@ export default function AcomodadoresPage() {
           {loadingConfig ? (
             <p className="text-sm text-slate-500">Cargando configuración...</p>
           ) : (
-            <div className="flex flex-col sm:flex-row gap-6 items-end">
+            <div className="flex flex-col sm:flex-row gap-6 items-stretch sm:items-end max-w-2xl mx-auto">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-slate-600 mb-1">Día de Entre Semana</label>
                 <select
@@ -202,7 +202,7 @@ export default function AcomodadoresPage() {
           <h2 className="text-sm font-bold text-slate-800">2. Generar Documento</h2>
         </div>
         <div className="p-6">
-          <div className="flex flex-col sm:flex-row gap-6 items-end">
+          <div className="flex flex-col sm:flex-row gap-6 items-stretch sm:items-end max-w-2xl mx-auto">
             <div className="flex-1">
               <label className="block text-sm font-medium text-slate-600 mb-1">Mes a generar</label>
               <div className="flex gap-2">
@@ -241,7 +241,7 @@ export default function AcomodadoresPage() {
             </button>
           </div>
           
-          <div className="mt-4 p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex items-start gap-3">
+          <div className="mt-8 max-w-2xl mx-auto p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex items-start gap-3">
             <svg className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <div className="text-sm text-blue-800">
               <p className="font-semibold mb-1">¿Cómo funciona la asignación automática?</p>
