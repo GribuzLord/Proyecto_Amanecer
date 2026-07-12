@@ -147,6 +147,28 @@ export default function ProgramEditor() {
   const getDuplicateWarning = (parte, secKey, partesSec) => {
     if (!parte.personaId) return null;
     
+    const todasLasPartes = programa.partes || [];
+
+    // Regla 1: El presidente y consejero no pueden tener asignaciones en Tesoros o Maestros
+    if (parte.tipoParte.codigo === 'presidente' || parte.tipoParte.codigo === 'consejero_auxiliar') {
+      const choca = todasLasPartes.some(p => p.id !== parte.id && p.personaId === parte.personaId && (p.tipoParte.seccion === 'tesoros' || p.tipoParte.seccion === 'maestros'));
+      if (choca) return "⚠️ Esta persona ya tiene una asignación en Tesoros o Maestros.";
+    }
+    if (secKey === 'tesoros' || secKey === 'maestros') {
+      const esPresidenteOConsejero = todasLasPartes.some(p => p.id !== parte.id && p.personaId === parte.personaId && (p.tipoParte.codigo === 'presidente' || p.tipoParte.codigo === 'consejero_auxiliar'));
+      if (esPresidenteOConsejero) return "⚠️ El Presidente o Consejero no pueden tener asignaciones en esta sección.";
+    }
+
+    // Regla 2: El lector de la biblia no puede participar en Maestros
+    if (parte.tipoParte.codigo === 'lectura_biblia') {
+      const tieneMaestros = todasLasPartes.some(p => p.id !== parte.id && p.personaId === parte.personaId && p.tipoParte.seccion === 'maestros');
+      if (tieneMaestros) return "⚠️ El lector de la Biblia no puede tener asignaciones en Maestros.";
+    }
+    if (secKey === 'maestros') {
+      const esLectorBiblia = todasLasPartes.some(p => p.id !== parte.id && p.personaId === parte.personaId && p.tipoParte.codigo === 'lectura_biblia');
+      if (esLectorBiblia) return "⚠️ El lector de la Biblia no puede tener asignaciones en Maestros.";
+    }
+    
     if (secKey === 'atalaya') {
       const duplicados = partesSec.filter(p => p.id !== parte.id && p.personaId === parte.personaId);
       if (duplicados.length > 0) {
