@@ -1,17 +1,28 @@
 const puppeteer = require('puppeteer');
-const { Programa, PartePrograma, TipoParte, Persona } = require('../models');
+const { Programa, PartePrograma, TipoParte, Persona, User } = require('../models');
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-function formatFechaCompleta(fechaStr) {
+function formatFechaCompleta(fechaStr, offsetDays = 0) {
   if (!fechaStr) return '';
   // Convertir YYYY-MM-DD asumiendo zona horaria local para evitar saltos de día
   const partes = fechaStr.split('-');
   if (partes.length !== 3) return fechaStr;
-  const year = partes[0];
-  const month = MESES[parseInt(partes[1], 10) - 1];
+  
+  const year = parseInt(partes[0], 10);
+  const monthIdx = parseInt(partes[1], 10) - 1;
   const day = parseInt(partes[2], 10);
-  return `${day} de ${month} de ${year}`;
+
+  const dateObj = new Date(year, monthIdx, day);
+  if (offsetDays) {
+    dateObj.setDate(dateObj.getDate() + offsetDays);
+  }
+
+  const newYear = dateObj.getFullYear();
+  const newMonth = MESES[dateObj.getMonth()];
+  const newDay = dateObj.getDate();
+  
+  return `${newDay} de ${newMonth} de ${newYear}`;
 }
 
 function generarHTMLHojita(asignacion) {
@@ -71,6 +82,7 @@ function generarHTMLHojita(asignacion) {
 async function generateSlipsPDF(programaId) {
   const programa = await Programa.findByPk(programaId, {
     include: [
+      { model: User },
       {
         model: PartePrograma,
         as: 'partes',
@@ -85,7 +97,13 @@ async function generateSlipsPDF(programaId) {
   if (!programa) throw new Error('Programa no encontrado');
 
   const partes = programa.partes;
-  const fechaStr = formatFechaCompleta(programa.semanaInicio); // Usamos el inicio de semana, o podríamos pedir la fecha exacta de la reunión si existiera. Usaremos semanaInicio.
+  
+  // Calcular el offset en base al día de reunión entre semana.
+  // Asumimos 1=Lunes, 2=Martes, 3=Miércoles, etc.
+  // Como semanaInicio siempre es Lunes, el offset en días es (diaEntreSemana - 1).
+  const offsetDays = (programa.User && programa.User.diaEntreSemana) ? (programa.User.diaEntreSemana - 1) : 0;
+  
+  const fechaStr = formatFechaCompleta(programa.semanaInicio, offsetDays);
 
   // Filtramos solo las partes que ameritan hojita: 
   // Lectura de la biblia (tesoros) y cualquier parte de Maestros
