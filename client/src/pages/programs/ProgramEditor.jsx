@@ -25,7 +25,7 @@ export default function ProgramEditor() {
   const [finalizarModal, setFinalizarModal] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [descargandoHojitas, setDescargandoHojitas] = useState(false);
-  const [customModal, setCustomModal] = useState({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '' });
+  const [customModal, setCustomModal] = useState({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false });
   const [confirmToggleModal, setConfirmToggleModal] = useState({ show: false, seccion: null, enabled: false });
   const [confirmDeleteModal, setConfirmDeleteModal] = useState({ show: false, grupoCustom: null });
 
@@ -79,9 +79,10 @@ export default function ProgramEditor() {
       seccion: customModal.seccion,
       requiereAyudante: customModal.requiereAyudante,
       requiereSala: customModal.requiereSala,
-      titulo: customModal.titulo
+      titulo: customModal.titulo,
+      esEstudioLibro: customModal.esEstudioLibro
     });
-    setCustomModal({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '' });
+    setCustomModal({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false });
     cargar();
   }
 
@@ -462,7 +463,7 @@ export default function ProgramEditor() {
               </div>
               {isCustomEnabled && (
                 <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-center">
-                  <button onClick={() => setCustomModal({ show: true, seccion: secKey, requiereAyudante: false, requiereSala: false, titulo: '' })} className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1">
+                  <button onClick={() => setCustomModal({ show: true, seccion: secKey, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false })} className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                     Agregar asignación dinámica
                   </button>
@@ -535,33 +536,50 @@ export default function ProgramEditor() {
               type="text" 
               value={customModal.titulo} 
               onChange={e => setCustomModal({...customModal, titulo: e.target.value})} 
-              className="w-full mb-4 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" 
+              className="w-full mb-4 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:opacity-50" 
               placeholder="Ej: Demostración" 
+              disabled={customModal.seccion === 'vida_cristiana' && customModal.esEstudioLibro}
             />
 
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-slate-700">¿Tendrá 2 personas (Ayudante)?</span>
-              <input 
-                type="checkbox" 
-                checked={customModal.requiereAyudante} 
-                onChange={e => setCustomModal({...customModal, requiereAyudante: e.target.checked})} 
-                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
-              />
-            </div>
+            {customModal.seccion === 'maestros' && (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-slate-700">¿Tendrá 2 personas (Ayudante)?</span>
+                  <input 
+                    type="checkbox" 
+                    checked={customModal.requiereAyudante} 
+                    onChange={e => setCustomModal({...customModal, requiereAyudante: e.target.checked})} 
+                    className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
+                  />
+                </div>
 
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-sm font-medium text-slate-700">¿Se presentará en ambas salas?</span>
-              <input 
-                type="checkbox" 
-                checked={customModal.requiereSala} 
-                onChange={e => setCustomModal({...customModal, requiereSala: e.target.checked})} 
-                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
-              />
-            </div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-sm font-medium text-slate-700">¿Se presentará en ambas salas?</span>
+                  <input 
+                    type="checkbox" 
+                    checked={customModal.requiereSala} 
+                    onChange={e => setCustomModal({...customModal, requiereSala: e.target.checked})} 
+                    className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
+                  />
+                </div>
+              </>
+            )}
+
+            {customModal.seccion === 'vida_cristiana' && (
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-sm font-medium text-slate-700">¿Es el estudio del libro? (Conductor y lector)</span>
+                <input 
+                  type="checkbox" 
+                  checked={customModal.esEstudioLibro} 
+                  onChange={e => setCustomModal({...customModal, esEstudioLibro: e.target.checked, titulo: e.target.checked ? '' : customModal.titulo})} 
+                  className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
+                />
+              </div>
+            )}
 
             <div className="flex justify-end gap-3">
               <button 
-                onClick={() => setCustomModal({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '' })} 
+                onClick={() => setCustomModal({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false })} 
                 className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
               >
                 Cancelar

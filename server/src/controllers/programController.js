@@ -128,10 +128,42 @@ exports.toggleCustomSection = catchAsync(async (req, res, next) => {
 // POST /api/programas/:id/partes-custom
 // Añade una parte dinámica a una sección personalizada
 exports.addCustomParte = catchAsync(async (req, res, next) => {
-  const { seccion, requiereAyudante, requiereSala, titulo } = req.body;
+  const { seccion, requiereAyudante, requiereSala, titulo, esEstudioLibro } = req.body;
   const { TipoParte, PartePrograma } = require('../models');
 
   const programaId = req.params.id;
+
+  if (seccion === 'vida_cristiana' && esEstudioLibro) {
+    const tipoEstudio = await TipoParte.findOne({ where: { codigo: 'estudio_congregacion' } });
+    const tipoLector = await TipoParte.findOne({ where: { codigo: 'lector_estudio' } });
+    if (!tipoEstudio || !tipoLector) return next(new AppError('Tipos de parte del estudio no encontrados', 500));
+
+    const grupoCustom = Date.now().toString() + Math.floor(Math.random() * 1000);
+    const creadas = await PartePrograma.bulkCreate([
+      {
+        programaId,
+        tipoParteId: tipoEstudio.id,
+        titulo: 'Estudio Bíblico de la Congregación',
+        sala: 'unica',
+        rolSlot: 'titular',
+        textoLibre: 'Por asignar',
+        grupoCustom,
+        orden: tipoEstudio.orden
+      },
+      {
+        programaId,
+        tipoParteId: tipoLector.id,
+        titulo: 'Lector del Estudio',
+        sala: 'unica',
+        rolSlot: 'titular',
+        textoLibre: 'Por asignar',
+        grupoCustom,
+        orden: tipoLector.orden
+      }
+    ]);
+    return res.status(201).json({ status: 'success', partes: creadas });
+  }
+
   const codigoTipo = seccion === 'maestros' ? 'custom_maestros' : 'custom_vida_cristiana';
   const tipoParte = await TipoParte.findOne({ where: { codigo: codigoTipo } });
 

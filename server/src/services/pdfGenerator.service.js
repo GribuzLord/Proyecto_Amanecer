@@ -163,7 +163,7 @@ async function generateProgramPDF(programaId) {
   let vidaHTML = '';
   vidaCristiana.forEach(p => {
     if (p.tipoParte.codigo === 'estudio_congregacion') {
-      const lector = vidaCristiana.find(vp => vp.tipoParte.codigo === 'lector_estudio');
+      const lector = vidaCristiana.find(vp => vp.tipoParte.codigo === 'lector_estudio' && (p.grupoCustom ? vp.grupoCustom === p.grupoCustom : true));
       vidaHTML += `
       <div style="display: flex; margin-bottom: 8px;">
         <div style="color: #9A2B2C; font-size: 16px; flex-grow: 1;">${partNumber}. ${p.titulo || p.tipoParte.nombre}</div>
