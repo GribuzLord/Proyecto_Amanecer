@@ -337,14 +337,15 @@ export default function ProgramEditor() {
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {orderSecciones.map(secKey => {
-          const partesSec = secciones[secKey];
-          if (!partesSec || partesSec.length === 0) return null;
-
-          const config = seccionConfig[secKey];
           const isMaestros = secKey === 'maestros';
           const isVida = secKey === 'vida_cristiana';
           const isCustomizable = isMaestros || isVida;
-          const isCustomEnabled = isMaestros ? programa.plantillaPersonalizadaMaestros : programa.plantillaPersonalizadaVida;
+          const isCustomEnabled = isMaestros ? programa.plantillaPersonalizadaMaestros : (isVida ? programa.plantillaPersonalizadaVida : false);
+
+          const partesSec = secciones[secKey] || [];
+          if (partesSec.length === 0 && !isCustomEnabled) return null;
+
+          const config = seccionConfig[secKey];
 
           return (
             <div key={secKey}>
