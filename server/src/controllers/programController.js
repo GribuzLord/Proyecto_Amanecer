@@ -148,7 +148,7 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
         rolSlot: 'titular',
         textoLibre: 'Por asignar',
         grupoCustom,
-        orden: tipoEstudio.orden
+        orden: 98
       },
       {
         programaId,
@@ -158,7 +158,7 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
         rolSlot: 'titular',
         textoLibre: 'Por asignar',
         grupoCustom,
-        orden: tipoLector.orden
+        orden: 99
       }
     ]);
     return res.status(201).json({ status: 'success', partes: creadas });
