@@ -10,6 +10,8 @@ const Programa = sequelize.define('Programa', {
   grupoAseo: { type: DataTypes.STRING(255), field: 'grupo_aseo' },
   pdfPath: { type: DataTypes.STRING(255), field: 'pdf_path' },
   esDiscursoMaestros: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'es_discurso_maestros' },
+  plantillaPersonalizadaMaestros: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'plantilla_personalizada_maestros' },
+  plantillaPersonalizadaVida: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'plantilla_personalizada_vida' },
 }, {
   tableName: 'programas',
 });

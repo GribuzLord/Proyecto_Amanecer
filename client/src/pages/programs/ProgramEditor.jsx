@@ -25,6 +25,7 @@ export default function ProgramEditor() {
   const [finalizarModal, setFinalizarModal] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [descargandoHojitas, setDescargandoHojitas] = useState(false);
+  const [customModal, setCustomModal] = useState({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '' });
 
   async function cargar() {
     const [progRes, persRes] = await Promise.all([
@@ -58,6 +59,31 @@ export default function ProgramEditor() {
     await api.post(`/programas/${id}/finalizar`);
     setFinalizarModal(false);
     cargar();
+  }
+
+  async function toggleCustom(seccion, enabled) {
+    if (confirm(`¿Estás seguro de ${enabled ? 'activar' : 'desactivar'} la plantilla personalizada? Se borrarán las asignaciones actuales de esta sección.`)) {
+      await api.patch(`/programas/${id}/toggle-custom`, { seccion, enabled });
+      cargar();
+    }
+  }
+
+  async function handleAddCustom() {
+    await api.post(`/programas/${id}/partes-custom`, {
+      seccion: customModal.seccion,
+      requiereAyudante: customModal.requiereAyudante,
+      requiereSala: customModal.requiereSala,
+      titulo: customModal.titulo
+    });
+    setCustomModal({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '' });
+    cargar();
+  }
+
+  async function handleDeleteCustom(grupoCustom) {
+    if (confirm('¿Eliminar esta asignación completa?')) {
+      await api.delete(`/programas/${id}/partes-custom/${grupoCustom}`);
+      cargar();
+    }
   }
 
   async function descargarPDF() {
@@ -305,11 +331,26 @@ export default function ProgramEditor() {
           if (!partesSec || partesSec.length === 0) return null;
 
           const config = seccionConfig[secKey];
+          const isMaestros = secKey === 'maestros';
+          const isVida = secKey === 'vida_cristiana';
+          const isCustomizable = isMaestros || isVida;
+          const isCustomEnabled = isMaestros ? programa.plantillaPersonalizadaMaestros : programa.plantillaPersonalizadaVida;
 
           return (
             <div key={secKey}>
-              <div className={`${config.bg} ${config.text} px-5 py-2.5 font-bold uppercase tracking-widest text-xs`}>
-                {config.titulo}
+              <div className={`${config.bg} ${config.text} px-5 py-2.5 font-bold uppercase tracking-widest text-xs flex justify-between items-center`}>
+                <span>{config.titulo}</span>
+                {isCustomizable && (
+                  <div className="flex items-center gap-2 text-[10px] bg-white/20 px-2 py-1 rounded">
+                    <span>¿Plantilla personalizada?</span>
+                    <button
+                      onClick={() => toggleCustom(secKey, !isCustomEnabled)}
+                      className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out ${isCustomEnabled ? 'bg-white' : 'bg-slate-400'}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-3 w-3 mt-0.5 transform rounded-full shadow ring-0 transition duration-200 ease-in-out ${isCustomEnabled ? 'translate-x-3.5 bg-brand-600' : 'translate-x-0.5 bg-white'}`} />
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="divide-y divide-slate-100">
                 {partesSec.map((parte, index) => {
@@ -366,6 +407,11 @@ export default function ProgramEditor() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                           </div>
                         </div>
+                        {parte.grupoCustom && (
+                          <button onClick={() => handleDeleteCustom(parte.grupoCustom)} className="text-red-400 hover:text-red-600 shrink-0 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar asignación">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        )}
                       </div>
                     </div>
                     {getDuplicateWarning(parte, secKey, partesSec) && (
@@ -403,6 +449,14 @@ export default function ProgramEditor() {
                   return content;
                 })}
               </div>
+              {isCustomEnabled && (
+                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-center">
+                  <button onClick={() => setCustomModal({ show: true, seccion: secKey, requiereAyudante: false, requiereSala: false, titulo: '' })} className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+                    Agregar asignación dinámica
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
@@ -454,6 +508,58 @@ export default function ProgramEditor() {
                 className="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors shadow-sm"
               >
                 Sí, finalizar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {customModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Nueva Asignación</h3>
+            
+            <label className="block text-sm font-medium text-slate-700 mb-1">Título / Tema</label>
+            <input 
+              type="text" 
+              value={customModal.titulo} 
+              onChange={e => setCustomModal({...customModal, titulo: e.target.value})} 
+              className="w-full mb-4 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" 
+              placeholder="Ej: Demostración" 
+            />
+
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-slate-700">¿Tendrá 2 personas (Ayudante)?</span>
+              <input 
+                type="checkbox" 
+                checked={customModal.requiereAyudante} 
+                onChange={e => setCustomModal({...customModal, requiereAyudante: e.target.checked})} 
+                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
+              />
+            </div>
+
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-sm font-medium text-slate-700">¿Se presentará en ambas salas?</span>
+              <input 
+                type="checkbox" 
+                checked={customModal.requiereSala} 
+                onChange={e => setCustomModal({...customModal, requiereSala: e.target.checked})} 
+                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setCustomModal({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '' })} 
+                className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleAddCustom} 
+                className="px-4 py-2 text-sm text-white bg-brand-600 hover:bg-brand-700 rounded-lg font-medium transition-colors"
+              >
+                Agregar
               </button>
             </div>
           </div>

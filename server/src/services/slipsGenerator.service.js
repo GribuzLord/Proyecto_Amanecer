@@ -112,10 +112,11 @@ async function generateSlipsPDF(programaId) {
     p.tipoParte.seccion === 'maestros'
   );
 
-  // Agrupar por tipoParte.codigo y sala para juntar titular y ayudante
+  // Agrupar por grupoCustom (o tipoParte.codigo) y sala para juntar titular y ayudante
   const grupos = {};
   partesRelevantes.forEach(p => {
-    const key = `${p.tipoParte.codigo}_${p.sala}`;
+    const baseKey = p.grupoCustom || p.tipoParte.codigo;
+    const key = `${baseKey}_${p.sala}`;
     if (!grupos[key]) grupos[key] = { tipo: p.tipoParte, sala: p.sala, titular: null, ayudante: null, titulo: p.titulo };
 
     if (p.rolSlot === 'titular') grupos[key].titular = p.persona?.nombre || '';

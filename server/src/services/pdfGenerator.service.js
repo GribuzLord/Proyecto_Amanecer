@@ -99,25 +99,26 @@ async function generateProgramPDF(programaId) {
 
   // Procesar Maestros
   let maestrosHTML = '';
-  // Agrupar por tipoParte.codigo
+  // Agrupar por grupoCustom o tipoParte.codigo
   const maestrosGroups = {};
   maestros.forEach(p => {
-    if (!maestrosGroups[p.tipoParte.codigo]) maestrosGroups[p.tipoParte.codigo] = { nombre: p.tipoParte.nombre, partes: [] };
-    maestrosGroups[p.tipoParte.codigo].partes.push(p);
+    const key = p.grupoCustom || p.tipoParte.codigo;
+    const groupName = p.grupoCustom ? (p.titulo || 'Asignación Dinámica') : p.tipoParte.nombre;
+    if (!maestrosGroups[key]) maestrosGroups[key] = { nombre: groupName, partes: [] };
+    maestrosGroups[key].partes.push(p);
   });
 
   Object.values(maestrosGroups).forEach((group, idx) => {
-    // Si requiere ayudante (Ej: conversaciones_1)
     const partes = group.partes;
     const isDiscursoEstudiante = partes.some(p => p.tipoParte.codigo === 'discurso_estudiante');
     let groupName = group.nombre;
     if (isDiscursoEstudiante && programa.esDiscursoMaestros) {
       groupName = 'Discurso';
     }
-    const isDiscurso = groupName.toLowerCase().includes('discurso');
     
     let principalText = '';
     let auxiliarText = '';
+    let unicaText = '';
 
     const getPair = (sala) => {
       const titular = partes.find(p => p.sala === sala && p.rolSlot === 'titular')?.persona?.nombre || '---';
@@ -131,11 +132,16 @@ async function generateProgramPDF(programaId) {
 
     if (partes.some(p => p.sala === 'principal')) principalText = getPair('principal');
     if (partes.some(p => p.sala === 'auxiliar')) auxiliarText = getPair('auxiliar');
+    if (partes.some(p => p.sala === 'unica')) unicaText = getPair('unica');
 
     maestrosHTML += `
     <div style="margin-bottom: 8px;">
       <div style="color: #B57F24; font-size: 16px;">${partNumber}. ${groupName}</div>
       <div style="display: flex; justify-content: space-around; margin-top: 5px; font-size: 13px;">
+        ${unicaText ? `
+        <div style="text-align: center;">
+          <div style="font-weight: bold;">${unicaText}</div>
+        </div>` : ''}
         ${principalText ? `
         <div style="text-align: center;">
           <div style="color: #B57F24; margin-bottom: 2px;">Sala Principal.</div>

@@ -10,7 +10,8 @@ const PartePrograma = sequelize.define('PartePrograma', {
   rolSlot: { type: DataTypes.STRING(40), defaultValue: 'titular', field: 'rol_slot' },
   personaId: { type: DataTypes.INTEGER, field: 'persona_id' },
   textoLibre: { type: DataTypes.STRING(150), field: 'texto_libre' },
-  orden: { type: DataTypes.INTEGER, defaultValue: 0 },
+  grupoCustom: { type: DataTypes.STRING(60), field: 'grupo_custom' },
+  orden: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
 }, {
   tableName: 'partes_programa',
   timestamps: false,
