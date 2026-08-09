@@ -26,6 +26,8 @@ export default function ProgramEditor() {
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [descargandoHojitas, setDescargandoHojitas] = useState(false);
   const [customModal, setCustomModal] = useState({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '' });
+  const [confirmToggleModal, setConfirmToggleModal] = useState({ show: false, seccion: null, enabled: false });
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState({ show: false, grupoCustom: null });
 
   async function cargar() {
     const [progRes, persRes] = await Promise.all([
@@ -61,11 +63,15 @@ export default function ProgramEditor() {
     cargar();
   }
 
-  async function toggleCustom(seccion, enabled) {
-    if (confirm(`¿Estás seguro de ${enabled ? 'activar' : 'desactivar'} la plantilla personalizada? Se borrarán las asignaciones actuales de esta sección.`)) {
-      await api.patch(`/programas/${id}/toggle-custom`, { seccion, enabled });
-      cargar();
-    }
+  function promptToggleCustom(seccion, enabled) {
+    setConfirmToggleModal({ show: true, seccion, enabled });
+  }
+
+  async function executeToggleCustom() {
+    const { seccion, enabled } = confirmToggleModal;
+    await api.patch(`/programas/${id}/toggle-custom`, { seccion, enabled });
+    setConfirmToggleModal({ show: false, seccion: null, enabled: false });
+    cargar();
   }
 
   async function handleAddCustom() {
@@ -79,11 +85,15 @@ export default function ProgramEditor() {
     cargar();
   }
 
-  async function handleDeleteCustom(grupoCustom) {
-    if (confirm('¿Eliminar esta asignación completa?')) {
-      await api.delete(`/programas/${id}/partes-custom/${grupoCustom}`);
-      cargar();
-    }
+  function promptDeleteCustom(grupoCustom) {
+    setConfirmDeleteModal({ show: true, grupoCustom });
+  }
+
+  async function executeDeleteCustom() {
+    const { grupoCustom } = confirmDeleteModal;
+    await api.delete(`/programas/${id}/partes-custom/${grupoCustom}`);
+    setConfirmDeleteModal({ show: false, grupoCustom: null });
+    cargar();
   }
 
   async function descargarPDF() {
@@ -344,7 +354,7 @@ export default function ProgramEditor() {
                   <div className="flex items-center gap-2 text-[10px] bg-white/20 px-2 py-1 rounded">
                     <span>¿Plantilla personalizada?</span>
                     <button
-                      onClick={() => toggleCustom(secKey, !isCustomEnabled)}
+                      onClick={() => promptToggleCustom(secKey, !isCustomEnabled)}
                       className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out ${isCustomEnabled ? 'bg-white' : 'bg-slate-400'}`}
                     >
                       <span className={`pointer-events-none inline-block h-3 w-3 mt-0.5 transform rounded-full shadow ring-0 transition duration-200 ease-in-out ${isCustomEnabled ? 'translate-x-3.5 bg-brand-600' : 'translate-x-0.5 bg-white'}`} />
@@ -408,7 +418,7 @@ export default function ProgramEditor() {
                           </div>
                         </div>
                         {parte.grupoCustom && (
-                          <button onClick={() => handleDeleteCustom(parte.grupoCustom)} className="text-red-400 hover:text-red-600 shrink-0 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar asignación">
+                          <button onClick={() => promptDeleteCustom(parte.grupoCustom)} className="text-red-400 hover:text-red-600 shrink-0 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar asignación">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                           </button>
                         )}
@@ -560,6 +570,72 @@ export default function ProgramEditor() {
                 className="px-4 py-2 text-sm text-white bg-brand-600 hover:bg-brand-700 rounded-lg font-medium transition-colors"
               >
                 Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmToggleModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">
+                ¿Estás seguro de {confirmToggleModal.enabled ? 'activar' : 'desactivar'} la plantilla personalizada?
+              </h3>
+              <p className="text-sm text-slate-500">
+                Se borrarán por completo las asignaciones actuales de esta sección. Tendrás que reasignar todo nuevamente.
+              </p>
+            </div>
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmToggleModal({ show: false, seccion: null, enabled: false })}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executeToggleCustom}
+                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm"
+              >
+                Sí, continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDeleteModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Eliminar asignación</h3>
+              <p className="text-sm text-slate-500">
+                ¿Estás seguro de querer eliminar esta asignación dinámica completa? Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteModal({ show: false, grupoCustom: null })}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executeDeleteCustom}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+              >
+                Sí, eliminar
               </button>
             </div>
           </div>
