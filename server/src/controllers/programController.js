@@ -164,7 +164,9 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
     return res.status(201).json({ status: 'success', partes: creadas });
   }
 
-  const codigoTipo = seccion === 'maestros' ? 'custom_maestros' : 'custom_vida_cristiana';
+  const codigoTipo = seccion === 'maestros' 
+    ? (req.body.esDiscurso ? 'discurso_estudiante' : 'custom_maestros') 
+    : 'custom_vida_cristiana';
   const tipoParte = await TipoParte.findOne({ where: { codigo: codigoTipo } });
 
   if (!tipoParte) return next(new AppError('Tipo de parte genérico no encontrado en BD', 500));
