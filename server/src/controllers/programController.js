@@ -84,10 +84,43 @@ exports.toggleCustomSection = catchAsync(async (req, res, next) => {
 
   // Borrar todas las partes existentes de esa sección
   const { TipoParte, PartePrograma } = require('../models');
-  const tiposSeccion = await TipoParte.findAll({ where: { seccion } });
+  const tiposSeccion = await TipoParte.findAll({ where: { seccion }, order: [['orden', 'ASC']] });
   const tipoIds = tiposSeccion.map(t => t.id);
   
   await PartePrograma.destroy({ where: { programaId: programa.id, tipoParteId: tipoIds } });
+
+  // Si se desactivó la plantilla personalizada, restaurar la plantilla base para esta sección
+  if (!enabled) {
+    for (const tipo of tiposSeccion) {
+      if (tipo.codigo.startsWith('custom_')) continue;
+
+      const salas = tipo.requiereSala ? ['principal', 'auxiliar'] : ['unica'];
+      for (const sala of salas) {
+        await PartePrograma.create({
+          programaId: programa.id,
+          tipoParteId: tipo.id,
+          titulo: null,
+          sala,
+          rolSlot: 'titular',
+          personaId: null,
+          textoLibre: 'Por asignar',
+          orden: tipo.orden,
+        });
+
+        if (tipo.requiereAyudante) {
+          await PartePrograma.create({
+            programaId: programa.id,
+            tipoParteId: tipo.id,
+            sala,
+            rolSlot: 'ayudante',
+            personaId: null,
+            textoLibre: 'Por asignar',
+            orden: tipo.orden,
+          });
+        }
+      }
+    }
+  }
 
   res.status(200).json({ status: 'success', programa });
 });
