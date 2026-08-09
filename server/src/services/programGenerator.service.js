@@ -74,6 +74,8 @@ async function generarPrograma({ userId, semanaInicio, semanaFin }) {
   const usadosEnEstaSemana = new Set();
 
   for (const tipo of tiposParte) {
+    if (tipo.codigo.startsWith('custom_')) continue;
+
     const salas = tipo.requiereSala ? ['principal', 'auxiliar'] : ['unica'];
 
     for (const sala of salas) {

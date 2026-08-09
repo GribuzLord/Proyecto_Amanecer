@@ -47,7 +47,7 @@ async function generateProgramPDF(programaId) {
       },
     ],
     order: [
-      [{ model: PartePrograma, as: 'partes' }, { model: TipoParte, as: 'tipoParte' }, 'orden', 'ASC'],
+      [{ model: PartePrograma, as: 'partes' }, 'orden', 'ASC'],
     ],
   });
 
