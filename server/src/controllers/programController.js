@@ -19,6 +19,10 @@ exports.getPrograma = catchAsync(async (req, res, next) => {
   const programa = await Programa.findOne({
     where: { id: req.params.id, userId: req.user.id },
     include: [{ association: 'partes', include: ['tipoParte', 'persona'] }],
+    order: [
+      [{ model: require('../models').PartePrograma, as: 'partes' }, 'orden', 'ASC'],
+      [{ model: require('../models').PartePrograma, as: 'partes' }, 'id', 'ASC']
+    ]
   });
   if (!programa) return next(new AppError('Programa no encontrado.', 404));
   res.status(200).json({ status: 'success', programa });

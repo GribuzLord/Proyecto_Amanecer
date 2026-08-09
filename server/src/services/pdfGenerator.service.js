@@ -48,6 +48,7 @@ async function generateProgramPDF(programaId) {
     ],
     order: [
       [{ model: PartePrograma, as: 'partes' }, 'orden', 'ASC'],
+      [{ model: PartePrograma, as: 'partes' }, 'id', 'ASC'],
     ],
   });
 
