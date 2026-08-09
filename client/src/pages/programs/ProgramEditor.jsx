@@ -163,7 +163,9 @@ export default function ProgramEditor() {
     'presidente_atalaya': ['Presidente'],
     'conductor_atalaya': ['Conductor_atalaya'],
     'lector_atalaya': ['Lector_atalaya'],
-    'oracion_final_atalaya': ['Oracion_final']
+    'oracion_final_atalaya': ['Oracion_final'],
+    'custom_maestros': ['Primera_conversación', 'Segunda_conversación', 'Tercera_conversación', 'Discurso_estudiante'],
+    'custom_vida_cristiana': ['Vida_cristiana (7)']
   };
 
   const getCandidatos = (tipoParte) => {
