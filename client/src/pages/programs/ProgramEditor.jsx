@@ -173,9 +173,11 @@ export default function ProgramEditor() {
     return personnel.filter(p => {
       if (!p.activo) return false;
       let restriccion = tipoParte.restriccionGenero;
-      if (tipoParte.codigo === 'discurso_estudiante' && programa?.esDiscursoMaestros) {
-        restriccion = 'M';
+      
+      if (tipoParte.codigo === 'discurso_estudiante') {
+        restriccion = programa?.esDiscursoMaestros ? 'M' : 'ninguna';
       }
+      
       if (restriccion !== 'ninguna' && p.genero !== restriccion) return false;
 
       // Para las asignaciones dinámicas genéricas, le damos libertad total al usuario de elegir a cualquier publicador activo
