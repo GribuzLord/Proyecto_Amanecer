@@ -177,6 +177,12 @@ export default function ProgramEditor() {
         restriccion = 'M';
       }
       if (restriccion !== 'ninguna' && p.genero !== restriccion) return false;
+
+      // Para las asignaciones dinámicas genéricas, le damos libertad total al usuario de elegir a cualquier publicador activo
+      if (tipoParte.codigo === 'custom_maestros' || tipoParte.codigo === 'custom_vida_cristiana') {
+        return true;
+      }
+
       const habs = p.habilitaciones || [];
       // Verificar si tiene alguna de las habilitaciones mapeadas para este tipo de parte
       const requeridas = habilitacionesMap[tipoParte.codigo] || [tipoParte.codigo];
