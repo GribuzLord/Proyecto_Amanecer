@@ -131,7 +131,12 @@ async function generateSlipsPDF(programaId) {
   const asignaciones = [];
 
   Object.values(grupos).forEach(grupo => {
-    // Si no hay nadie asignado, igual podemos generar la hojita en blanco
+    // Si la sala auxiliar está deshabilitada, la omitimos
+    if (!programa.tieneSalaAuxiliar && grupo.sala === 'auxiliar') return;
+    
+    // Si la asignación está completamente vacía, no imprimimos hojita (según preferencia del usuario)
+    if (!grupo.titular && !grupo.ayudante) return;
+
     const esDiscursoOPresentacion = grupo.tipo.nombre.toLowerCase().includes('discurso') || grupo.tipo.nombre.toLowerCase().includes('presentación');
 
     let tipoIntervencion = grupo.tipo.nombre;

@@ -8,6 +8,7 @@ const Programa = sequelize.define('Programa', {
   semanaFin: { type: DataTypes.DATEONLY, allowNull: false, field: 'semana_fin' },
   estado: { type: DataTypes.ENUM('borrador', 'finalizado'), defaultValue: 'borrador' },
   grupoAseo: { type: DataTypes.STRING(255), field: 'grupo_aseo' },
+  tieneSalaAuxiliar: { type: DataTypes.BOOLEAN, defaultValue: true, field: 'tiene_sala_auxiliar' },
   pdfPath: { type: DataTypes.STRING(255), field: 'pdf_path' },
   esDiscursoMaestros: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'es_discurso_maestros' },
   plantillaPersonalizadaMaestros: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'plantilla_personalizada_maestros' },

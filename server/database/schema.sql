@@ -74,6 +74,7 @@ CREATE TABLE programas (
   semana_fin     DATE NOT NULL,
   estado         ENUM('borrador', 'finalizado') NOT NULL DEFAULT 'borrador',
   grupo_aseo     VARCHAR(255) NULL,
+  tiene_sala_auxiliar BOOLEAN NOT NULL DEFAULT TRUE,
   es_discurso_maestros BOOLEAN NOT NULL DEFAULT FALSE,
   plantilla_personalizada_maestros BOOLEAN NOT NULL DEFAULT FALSE,
   plantilla_personalizada_vida BOOLEAN NOT NULL DEFAULT FALSE,

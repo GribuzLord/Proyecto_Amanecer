@@ -63,11 +63,12 @@ exports.updatePrograma = catchAsync(async (req, res, next) => {
   });
   if (!programa) return next(new AppError('Programa no encontrado.', 404));
 
-  const { grupoAseo, esDiscursoMaestros, plantillaPersonalizadaMaestros, plantillaPersonalizadaVida } = req.body;
+  const { grupoAseo, esDiscursoMaestros, plantillaPersonalizadaMaestros, plantillaPersonalizadaVida, tieneSalaAuxiliar } = req.body;
   
   const updateData = {};
   if (grupoAseo !== undefined) updateData.grupoAseo = grupoAseo;
   if (esDiscursoMaestros !== undefined) updateData.esDiscursoMaestros = esDiscursoMaestros;
+  if (tieneSalaAuxiliar !== undefined) updateData.tieneSalaAuxiliar = tieneSalaAuxiliar;
   if (plantillaPersonalizadaMaestros !== undefined) updateData.plantillaPersonalizadaMaestros = plantillaPersonalizadaMaestros;
   if (plantillaPersonalizadaVida !== undefined) updateData.plantillaPersonalizadaVida = plantillaPersonalizadaVida;
 

@@ -347,6 +347,23 @@ export default function ProgramEditor() {
         </div>
       </div>
 
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm mb-6 p-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <p className="text-sm font-bold text-slate-800">¿Habrá Sala Auxiliar esta semana?</p>
+          <p className="text-xs text-slate-500 mt-0.5">Si se desactiva, se ocultarán todas las asignaciones de la sala auxiliar y no se imprimirán.</p>
+        </div>
+        <button
+          onClick={async () => {
+            const newValue = !programa.tieneSalaAuxiliar;
+            setPrograma({ ...programa, tieneSalaAuxiliar: newValue });
+            await api.patch(`/programas/${id}`, { tieneSalaAuxiliar: newValue });
+          }}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 ${programa.tieneSalaAuxiliar ? 'bg-brand-600' : 'bg-slate-200'}`}
+        >
+          <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${programa.tieneSalaAuxiliar ? 'translate-x-5' : 'translate-x-0'}`} />
+        </button>
+      </div>
+
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {orderSecciones.map(secKey => {
           const isMaestros = secKey === 'maestros';
@@ -377,6 +394,10 @@ export default function ProgramEditor() {
               </div>
               <div className="divide-y divide-slate-100">
                 {partesSec.map((parte, index) => {
+                  if (!programa.tieneSalaAuxiliar && parte.sala === 'auxiliar') {
+                    return null;
+                  }
+
                   if (parte.tipoParte.codigo === 'discurso_estudiante' && programa.esDiscursoMaestros && parte.rolSlot === 'ayudante') {
                     return null;
                   }

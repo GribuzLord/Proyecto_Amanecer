@@ -86,7 +86,7 @@ async function generateProgramPDF(programaId) {
     const auxiliar = lecturaBiblia.find(p => p.sala === 'auxiliar');
     
     if (principal) lecturaHtml += `<div><span style="color: #387B8A;">Sala Principal:</span> <b>${principal.persona?.nombre || ''}</b></div>`;
-    if (auxiliar) lecturaHtml += `<div><span style="color: #387B8A;">Sala Auxiliar:</span> <b>${auxiliar.persona?.nombre || ''}</b></div>`;
+    if (auxiliar && programa.tieneSalaAuxiliar) lecturaHtml += `<div><span style="color: #387B8A;">Sala Auxiliar:</span> <b>${auxiliar.persona?.nombre || ''}</b></div>`;
 
     tesorosHTML += `
     <div style="display: flex; margin-bottom: 8px;">
@@ -132,7 +132,7 @@ async function generateProgramPDF(programaId) {
     };
 
     if (partes.some(p => p.sala === 'principal')) principalText = getPair('principal');
-    if (partes.some(p => p.sala === 'auxiliar')) auxiliarText = getPair('auxiliar');
+    if (programa.tieneSalaAuxiliar && partes.some(p => p.sala === 'auxiliar')) auxiliarText = getPair('auxiliar');
     if (partes.some(p => p.sala === 'unica')) unicaText = getPair('unica');
 
     maestrosHTML += `
