@@ -394,7 +394,7 @@ export default function ProgramEditor() {
               </div>
               <div className="divide-y divide-slate-100">
                 {partesSec.map((parte, index) => {
-                  if (!programa.tieneSalaAuxiliar && parte.sala === 'auxiliar') {
+                  if (!programa.tieneSalaAuxiliar && (parte.sala === 'auxiliar' || parte.tipoParte.codigo === 'consejero_auxiliar')) {
                     return null;
                   }
 
@@ -596,15 +596,17 @@ export default function ProgramEditor() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-sm font-medium text-slate-700">¿Se presentará en ambas salas?</span>
-                  <input 
-                    type="checkbox" 
-                    checked={customModal.requiereSala} 
-                    onChange={e => setCustomModal({...customModal, requiereSala: e.target.checked})} 
-                    className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
-                  />
-                </div>
+                {programa.tieneSalaAuxiliar && (
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-sm font-medium text-slate-700">¿Se presentará en ambas salas?</span>
+                    <input 
+                      type="checkbox" 
+                      checked={customModal.requiereSala} 
+                      onChange={e => setCustomModal({...customModal, requiereSala: e.target.checked})} 
+                      className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
+                    />
+                  </div>
+                )}
               </>
             )}
 
