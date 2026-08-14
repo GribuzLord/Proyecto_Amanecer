@@ -141,7 +141,8 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
   if (seccion === 'vida_cristiana' && esEstudioLibro) {
     const tipoEstudio = await TipoParte.findOne({ where: { codigo: 'estudio_congregacion' } });
     const tipoLector = await TipoParte.findOne({ where: { codigo: 'lector_estudio' } });
-    if (!tipoEstudio || !tipoLector) return next(new AppError('Tipos de parte del estudio no encontrados', 500));
+    const tipoOracion = await TipoParte.findOne({ where: { codigo: 'oracion_final' } });
+    if (!tipoEstudio || !tipoLector || !tipoOracion) return next(new AppError('Tipos de parte del estudio no encontrados', 500));
 
     const grupoCustom = Date.now().toString() + Math.floor(Math.random() * 1000);
     const creadas = await PartePrograma.bulkCreate([
@@ -164,6 +165,16 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
         textoLibre: 'Por asignar',
         grupoCustom,
         orden: 99
+      },
+      {
+        programaId,
+        tipoParteId: tipoOracion.id,
+        titulo: 'Oración Final',
+        sala: 'unica',
+        rolSlot: 'titular',
+        textoLibre: 'Por asignar',
+        grupoCustom,
+        orden: 100
       }
     ]);
     return res.status(201).json({ status: 'success', partes: creadas });
