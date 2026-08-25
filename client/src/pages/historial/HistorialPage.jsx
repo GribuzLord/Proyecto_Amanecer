@@ -11,6 +11,34 @@ const seccionConfig = {
   fin_semana: { bg: 'bg-indigo-600', text: 'text-white', border: 'border-indigo-600', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', titulo: 'Reunión Fin de Semana' },
 };
 
+const filterOptionsMap = {
+  presidente: [],
+  tesoros: [
+    { value: 'tesoro_1', label: 'Tesoros de la Biblia (Tema)' },
+    { value: 'perlas_escondidas', label: 'Busquemos Perlas Escondidas' },
+    { value: 'lectura_biblia', label: 'Lectura de la Biblia' },
+  ],
+  maestros: [
+    { value: 'conversaciones_1', label: 'Empiece Conversaciones' },
+    { value: 'conversaciones_2', label: 'Haga revisitas' },
+    { value: 'discurso_estudiante', label: 'Participación' },
+    { value: 'custom_maestros', label: 'Asignaciones Dinámicas' },
+  ],
+  vida_cristiana: [
+    { value: 'vida_cristiana_tema', label: 'Tema de Nuestra Vida Cristiana' },
+    { value: 'estudio_congregacion', label: 'Conductor (Estudio Bíblico)' },
+    { value: 'lector_estudio', label: 'Lector (Estudio Bíblico)' },
+    { value: 'oracion_final', label: 'Oración Final' },
+    { value: 'custom_vida_cristiana', label: 'Asignaciones Dinámicas' },
+  ],
+  fin_semana: [
+    { value: 'presidente_atalaya', label: 'Presidente' },
+    { value: 'conductor_atalaya', label: 'Conductor' },
+    { value: 'lector_atalaya', label: 'Lector' },
+    { value: 'oracion_final_atalaya', label: 'Oración Final' },
+  ]
+};
+
 export default function HistorialPage() {
   const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,10 +89,7 @@ export default function HistorialPage() {
         }
 
         if (roleFilter !== 'all') {
-           const code = p.tipoParte.codigo;
-           if (roleFilter === 'lector' && code !== 'lector_estudio' && code !== 'lector_atalaya' && code !== 'lectura_biblia') return false;
-           if (roleFilter === 'conductor' && code !== 'estudio_congregacion' && code !== 'conductor_atalaya') return false;
-           if (roleFilter === 'oracion' && !code.includes('oracion')) return false;
+           if (p.tipoParte.codigo !== roleFilter) return false;
         }
 
         if (sectionKey === 'presidente') {
@@ -126,7 +151,7 @@ export default function HistorialPage() {
           return (
             <button
               key={key}
-              onClick={() => setActiveTab(key)}
+              onClick={() => { setActiveTab(key); setRoleFilter('all'); }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all border-2 ${
                 isActive 
                   ? `${config.bg} ${config.text} border-transparent shadow-md transform -translate-y-0.5` 
@@ -160,17 +185,17 @@ export default function HistorialPage() {
         </div>
         
         <div className="sm:w-64">
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Filtrar por Rol Específico</label>
+          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Filtrar por Asignación Específica</label>
           <select 
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors appearance-none"
             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748B'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1.25em 1.25em' }}
           >
-            <option value="all">Todas las participaciones</option>
-            <option value="lector">Solo Lectores (Libro / Atalaya / Biblia)</option>
-            <option value="conductor">Solo Conductores (Libro / Atalaya)</option>
-            <option value="oracion">Solo Oraciones</option>
+            <option value="all">Todas las asignaciones</option>
+            {filterOptionsMap[activeTab].map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
           </select>
         </div>
       </div>
