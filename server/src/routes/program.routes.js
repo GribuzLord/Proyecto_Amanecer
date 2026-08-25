@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(protect);
 
 router.get('/', programController.getAllProgramas);
+router.get('/historial/tablero', programController.getHistorial);
 router.post('/generar', programController.generarPrograma);
 router.get('/:id', programController.getPrograma);
 router.get('/:id/pdf', programController.exportarPdf);

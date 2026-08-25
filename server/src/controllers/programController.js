@@ -1,4 +1,5 @@
-const { Programa, PartePrograma } = require('../models');
+const { Programa, PartePrograma, TipoParte, Persona } = require('../models');
+const { Op } = require('sequelize');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const { generarPrograma, finalizarPrograma } = require('../services/programGenerator.service');
@@ -11,6 +12,43 @@ exports.getAllProgramas = catchAsync(async (req, res) => {
     where: { userId: req.user.id },
     order: [['semanaInicio', 'DESC']],
   });
+  res.status(200).json({ status: 'success', results: programas.length, programas });
+});
+
+// GET /api/programas/historial/tablero
+exports.getHistorial = catchAsync(async (req, res) => {
+  const { viewType } = req.query; // 'recent' (2 months) or 'all'
+  
+  let whereClause = { userId: req.user.id };
+  
+  if (viewType !== 'all') {
+    const today = new Date();
+    // Start of previous month
+    const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const startDateStr = startDate.toISOString().split('T')[0];
+    // End of next month (to include future assigned programs)
+    const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+    const endDateStr = endDate.toISOString().split('T')[0];
+    
+    whereClause.semanaInicio = { [Op.gte]: startDateStr };
+    whereClause.semanaFin = { [Op.lte]: endDateStr };
+  }
+
+  const programas = await Programa.findAll({
+    where: whereClause,
+    include: [{ 
+      model: PartePrograma, 
+      as: 'partes',
+      where: { personaId: { [Op.not]: null } },
+      required: false, // If a program has no assigned parts, it will just have an empty array
+      include: [
+        { model: TipoParte, as: 'tipoParte' }, 
+        { model: Persona, as: 'persona' }
+      ]
+    }],
+    order: [['semanaInicio', 'DESC'], [{ model: PartePrograma, as: 'partes' }, 'orden', 'ASC']]
+  });
+
   res.status(200).json({ status: 'success', results: programas.length, programas });
 });
 
