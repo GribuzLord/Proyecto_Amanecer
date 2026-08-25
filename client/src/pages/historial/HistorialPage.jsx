@@ -227,8 +227,8 @@ export default function HistorialPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {currentList.map((item, index) => (
-              <div key={item.id + index} className="p-4 sm:p-5 hover:bg-slate-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {currentList.map((item) => (
+              <div key={item.id} className="p-4 sm:p-5 hover:bg-slate-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 font-bold text-slate-600 text-sm">
                     {item.hermano.charAt(0)}
