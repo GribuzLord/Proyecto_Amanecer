@@ -379,6 +379,8 @@ export default function ProgramEditor() {
           const partesSec = secciones[secKey] || [];
           if (partesSec.length === 0 && !isCustomEnabled) return null;
 
+          const hideAddButton = secKey === 'vida_cristiana' && partesSec.some(p => p.tipoParte.codigo === 'estudio_congregacion');
+
           const config = seccionConfig[secKey];
 
           return (
@@ -498,7 +500,7 @@ export default function ProgramEditor() {
                   return content;
                 })}
               </div>
-              {isCustomEnabled && (
+              {isCustomEnabled && !hideAddButton && (
                 <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-center">
                   <button onClick={() => setCustomModal({ show: true, seccion: secKey, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false, esDiscurso: false })} className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
