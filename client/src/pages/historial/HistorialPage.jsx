@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import api from '../../api/axios';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
