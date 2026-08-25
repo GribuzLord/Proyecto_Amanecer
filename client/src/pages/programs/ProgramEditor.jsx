@@ -180,9 +180,14 @@ export default function ProgramEditor() {
       
       if (restriccion !== 'ninguna' && p.genero !== restriccion) return false;
 
-      // Para las asignaciones dinámicas genéricas, le damos libertad total al usuario de elegir a cualquier publicador activo
-      if (tipoParte.codigo === 'custom_maestros' || tipoParte.codigo === 'custom_vida_cristiana') {
+      // Para las asignaciones dinámicas en maestros, libertad total
+      if (tipoParte.codigo === 'custom_maestros') {
         return true;
+      }
+
+      // Para las asignaciones dinámicas en vida cristiana, solo ancianos y siervos ministeriales
+      if (tipoParte.codigo === 'custom_vida_cristiana') {
+        return p.privilegio === 'anciano' || p.privilegio === 'siervo_ministerial';
       }
 
       const habs = p.habilitaciones || [];
