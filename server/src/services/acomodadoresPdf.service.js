@@ -86,11 +86,13 @@ async function generarPdfAcomodadores(userId, year, month) {
     if (prog) {
       prog.partes.forEach(parte => {
         if (!parte.personaId) return;
-        // Si es entre semana, las partes de atalaya no importan (son del domingo)
-        // Si es fin de semana, las partes de entre semana no importan
-        const esAtalaya = parte.tipoParte.seccion === 'atalaya';
-        if (isEntreSemana && !esAtalaya) ocupadosIds.add(parte.personaId);
-        if (!isEntreSemana && esAtalaya) ocupadosIds.add(parte.personaId);
+        // Solo excluimos a los que tienen presidencia o estudio de libro
+        const code = parte.tipoParte.codigo;
+        if (code === 'presidente' || code === 'estudio_congregacion' || code === 'presidente_atalaya') {
+          const esAtalaya = parte.tipoParte.seccion === 'atalaya';
+          if (isEntreSemana && !esAtalaya) ocupadosIds.add(parte.personaId);
+          if (!isEntreSemana && esAtalaya) ocupadosIds.add(parte.personaId);
+        }
       });
     }
 
