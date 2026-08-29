@@ -75,6 +75,12 @@ async function generarPdfAcomodadores(userId, year, month) {
 
   const asignaciones = [];
 
+  // Mapa para rastrear fechas en memoria y evitar problemas con instancias de Sequelize
+  const fechasMemoria = new Map();
+  personas.forEach(p => {
+    fechasMemoria.set(p.id, p.ultimaAsignacionAcomodador);
+  });
+
   for (const date of allDates) {
     const dateStr = toDateStr(date);
     const isEntreSemana = fechasEntreSemana.some(d => d.getTime() === date.getTime());
@@ -107,13 +113,16 @@ async function generarPdfAcomodadores(userId, year, month) {
 
       // Ordenar por ultima_asignacion_acomodador
       disponibles.sort((a, b) => {
-        if (!a.ultimaAsignacionAcomodador) return -1;
-        if (!b.ultimaAsignacionAcomodador) return 1;
-        return new Date(a.ultimaAsignacionAcomodador) - new Date(b.ultimaAsignacionAcomodador);
+        const dateA = fechasMemoria.get(a.id);
+        const dateB = fechasMemoria.get(b.id);
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return -1;
+        if (!dateB) return 1;
+        return new Date(dateA) - new Date(dateB);
       });
 
       const elegido = disponibles[0];
-      elegido.ultimaAsignacionAcomodador = dateStr; // Actualizar en memoria para siguientes fechas
+      fechasMemoria.set(elegido.id, dateStr); // Actualizar en memoria para siguientes fechas
       return elegido;
     };
 
@@ -137,15 +146,13 @@ async function generarPdfAcomodadores(userId, year, month) {
   }
 
   // Guardar ultimaAsignacionAcomodador en base de datos para rotación persistente
-  // Solo guardamos los que fueron asignados (la fecha más reciente)
-  for (const asig of asignaciones) {
-    const updatePersona = async (nombre) => {
-      const p = personas.find(x => x.nombre === nombre);
-      if (p) await p.save();
-    };
-    await updatePersona(asig.principal);
-    await updatePersona(asig.izquierdo);
-    await updatePersona(asig.derecho);
+  // Iteramos sobre personas y guardamos si la fecha en memoria es distinta a la de la BD
+  for (const p of personas) {
+    const fechaMemoria = fechasMemoria.get(p.id);
+    if (fechaMemoria && fechaMemoria !== p.ultimaAsignacionAcomodador) {
+      p.ultimaAsignacionAcomodador = fechaMemoria;
+      await p.save();
+    }
   }
 
   const mesStr = format(new Date(year, month, 1), 'MMMM yyyy', { locale: es }).toUpperCase();
