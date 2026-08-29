@@ -171,12 +171,13 @@ async function generarPdfAcomodadores(userId, year, month) {
       .congregation { text-align: center; font-size: 18px; color: #0284c7; font-style: italic; margin-bottom: 30px; }
       
       .table-container { padding: 0 40px 30px; }
-      table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; border: 1px solid #bae6fd; }
-      th { background-color: #0ea5e9; color: white; padding: 15px; font-weight: 600; text-align: center; font-size: 15px; border-right: 1px solid #38bdf8; }
+      table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; border: 1px solid #bae6fd; }
+      th { background-color: #0ea5e9; color: white; padding: 15px 10px; font-weight: 600; text-align: center; font-size: 14px; border-right: 1px solid #38bdf8; }
       th:last-child { border-right: none; }
-      td { padding: 16px; text-align: center; font-size: 15px; border-bottom: 1px solid #e0f2fe; border-right: 1px solid #e0f2fe; color: #0f172a; font-weight: 500; }
+      td { padding: 14px 10px; text-align: center; font-size: 14px; border-bottom: 1px solid #e0f2fe; border-right: 1px solid #e0f2fe; color: #0f172a; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       td:first-child { font-weight: bold; color: #0369a1; }
       td:last-child { border-right: none; }
+      tr { page-break-inside: avoid; }
       tr:last-child td { border-bottom: none; }
       tr:nth-child(even) { background-color: #f8fafc; }
       
@@ -243,6 +244,7 @@ async function generarPdfAcomodadores(userId, year, month) {
   const pdfBuffer = await page.pdf({
     format: 'Letter',
     printBackground: true,
+    scale: 0.95,
     margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
   });
 
