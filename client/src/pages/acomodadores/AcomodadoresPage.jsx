@@ -29,7 +29,7 @@ export default function AcomodadoresPage() {
   const [config, setConfig] = useState({ diaEntreSemana: 3, diaFinSemana: 0 });
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
-  
+
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const d = new Date();
     return { month: d.getMonth(), year: d.getFullYear() };
@@ -37,7 +37,7 @@ export default function AcomodadoresPage() {
 
   const [generating, setGenerating] = useState(false);
   const [programasMes, setProgramasMes] = useState([]);
-  
+
   // States for Modals/Alerts
   const [saveStatus, setSaveStatus] = useState(null); // null | 'success' | 'error'
   const [confirmModal, setConfirmModal] = useState({ show: false, expected: 0, current: 0 });
@@ -67,7 +67,7 @@ export default function AcomodadoresPage() {
         const m = selectedMonth.month;
         const inicio = new Date(y, m, 1).toISOString().split('T')[0];
         const fin = new Date(y, m + 1, 0).toISOString().split('T')[0];
-        
+
         const { data } = await api.get('/programas');
         const progsDelMes = data.programas.filter(p => p.semanaInicio <= fin && p.semanaInicio >= inicio);
         setProgramasMes(progsDelMes);
@@ -100,12 +100,12 @@ export default function AcomodadoresPage() {
   async function handleGenerateClick() {
     // Validar si el mes esta completo
     const expectedMeetings = countMeetingsInMonth(selectedMonth.year, selectedMonth.month, config.diaEntreSemana);
-    
+
     if (programasMes.length < expectedMeetings) {
       setConfirmModal({ show: true, expected: expectedMeetings, current: programasMes.length });
       return;
     }
-    
+
     await proceedGenerate();
   }
 
@@ -129,7 +129,7 @@ export default function AcomodadoresPage() {
     } catch (err) {
       console.error(err);
       setGenerating(false);
-      
+
       let errorMessage = 'Error al generar el PDF de acomodadores.';
       if (err.response && err.response.data instanceof Blob) {
         try {
@@ -140,7 +140,7 @@ export default function AcomodadoresPage() {
           console.error('No se pudo parsear el error blob:', e);
         }
       }
-      
+
       setErrorModal({ show: true, message: errorMessage });
     }
   }
@@ -224,7 +224,7 @@ export default function AcomodadoresPage() {
                 />
               </div>
             </div>
-            
+
             <button
               onClick={handleGenerateClick}
               disabled={generating}
@@ -240,14 +240,14 @@ export default function AcomodadoresPage() {
               )}
             </button>
           </div>
-          
+
           <div className="mt-8 max-w-2xl mx-auto p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex items-start gap-3">
             <svg className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <div className="text-sm text-blue-800">
               <p className="font-semibold mb-1">¿Cómo funciona la asignación automática?</p>
               <ul className="list-disc list-inside space-y-1 opacity-90 ml-1">
                 <li>Solo se consideran los varones que tienen activada la casilla <b>"Apoya como acomodador"</b> en la sección de Personal.</li>
-                <li>Si alguien tiene participación en la reunión un día, el sistema no lo asignará como acomodador (a menos que no haya nadie más disponible).</li>
+                <li>Si alguien tiene participación (como presidente, conductor o lector) en la reunión un día, el sistema no lo asignará como acomodador (a menos que no haya nadie más disponible).</li>
                 <li>El sistema rotará a los hermanos basándose en la fecha de su última asignación.</li>
               </ul>
             </div>
@@ -274,13 +274,13 @@ export default function AcomodadoresPage() {
               </p>
             </div>
             <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setConfirmModal({ show: false, expected: 0, current: 0 })}
                 className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 onClick={proceedGenerate}
                 className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm"
               >
@@ -305,7 +305,7 @@ export default function AcomodadoresPage() {
               <p className="text-sm text-slate-600 mb-6">
                 {errorModal.message}
               </p>
-              <button 
+              <button
                 onClick={() => setErrorModal({ show: false, message: '' })}
                 className="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-2.5 rounded-xl transition-colors"
               >
