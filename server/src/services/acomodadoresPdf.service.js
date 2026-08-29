@@ -77,8 +77,10 @@ async function generarPdfAcomodadores(userId, year, month) {
 
   // Mapa para rastrear fechas en memoria y evitar problemas con instancias de Sequelize
   const fechasMemoria = new Map();
+  const asignacionesEsteMes = new Map();
   personas.forEach(p => {
     fechasMemoria.set(p.id, p.ultimaAsignacionAcomodador);
+    asignacionesEsteMes.set(p.id, 0);
   });
 
   for (const date of allDates) {
@@ -111,8 +113,15 @@ async function generarPdfAcomodadores(userId, year, month) {
       }
       if (disponibles.length === 0) return null; // Nadie existe
 
-      // Ordenar por ultima_asignacion_acomodador
+      // Ordenar primero por cantidad de asignaciones este mes, luego por ultima_asignacion_acomodador
       disponibles.sort((a, b) => {
+        const countA = asignacionesEsteMes.get(a.id);
+        const countB = asignacionesEsteMes.get(b.id);
+        
+        if (countA !== countB) {
+          return countA - countB; // El que tenga menos asignaciones este mes va primero
+        }
+
         const dateA = fechasMemoria.get(a.id);
         const dateB = fechasMemoria.get(b.id);
         if (!dateA && !dateB) return 0;
@@ -123,6 +132,7 @@ async function generarPdfAcomodadores(userId, year, month) {
 
       const elegido = disponibles[0];
       fechasMemoria.set(elegido.id, dateStr); // Actualizar en memoria para siguientes fechas
+      asignacionesEsteMes.set(elegido.id, asignacionesEsteMes.get(elegido.id) + 1); // Incrementar contador
       return elegido;
     };
 
