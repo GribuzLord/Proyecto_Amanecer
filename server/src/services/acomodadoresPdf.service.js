@@ -86,9 +86,10 @@ async function generarPdfAcomodadores(userId, year, month) {
     if (prog) {
       prog.partes.forEach(parte => {
         if (!parte.personaId) return;
-        // Solo excluimos a los que tienen presidencia o estudio de libro
+        // Solo excluimos a los que tienen presidencia, conductor de atalaya, estudio de libro o lectores (de atalaya/libro)
         const code = parte.tipoParte.codigo;
-        if (code === 'presidente' || code === 'estudio_congregacion' || code === 'presidente_atalaya') {
+        const exclusions = ['presidente', 'estudio_congregacion', 'presidente_atalaya', 'conductor_atalaya', 'lector_estudio', 'lector_atalaya'];
+        if (exclusions.includes(code)) {
           const esAtalaya = parte.tipoParte.seccion === 'atalaya';
           if (isEntreSemana && !esAtalaya) ocupadosIds.add(parte.personaId);
           if (!isEntreSemana && esAtalaya) ocupadosIds.add(parte.personaId);
