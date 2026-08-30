@@ -79,6 +79,7 @@ export default function PersonnelList() {
   const [personas, setPersonas] = useState([]);
   const [form, setForm] = useState(getVacio());
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null, nombre: '' });
   const [consModal, setConsModal] = useState({ show: false, persona: null });
@@ -159,10 +160,28 @@ export default function PersonnelList() {
 
   async function guardar(e) {
     e.preventDefault();
-    await api.post('/personas', form);
+    if (editingId) {
+      await api.patch(`/personas/${editingId}`, form);
+    } else {
+      await api.post('/personas', form);
+    }
     setForm(getVacio());
+    setEditingId(null);
     setShowForm(false);
     cargar();
+  }
+
+  function openEditMode(persona) {
+    setForm({
+      nombre: persona.nombre,
+      genero: persona.genero,
+      privilegio: persona.privilegio,
+      habilitaciones: persona.habilitaciones,
+      apoyaAcomodador: persona.apoyaAcomodador
+    });
+    setEditingId(persona.id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function openDeleteModal(persona) {
@@ -197,7 +216,10 @@ export default function PersonnelList() {
         <h2 className="text-xl font-bold text-slate-800">Personal</h2>
         <button
           onClick={() => {
-            if (showForm) setForm(getVacio());
+            if (showForm) {
+              setForm(getVacio());
+              setEditingId(null);
+            }
             setShowForm((s) => !s);
           }}
           className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
@@ -208,6 +230,9 @@ export default function PersonnelList() {
 
       {showForm && (
         <form onSubmit={guardar} className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-slate-800">{editingId ? 'Editar persona' : 'Agregar persona'}</h3>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Nombre</label>
@@ -282,7 +307,7 @@ export default function PersonnelList() {
           </div>
 
           <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">
-            Guardar persona
+            {editingId ? 'Guardar cambios' : 'Guardar persona'}
           </button>
         </form>
       )}
@@ -400,7 +425,10 @@ export default function PersonnelList() {
                         </button>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-right">
+                    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                      <button onClick={() => openEditMode(p)} className="text-brand-600 hover:underline text-xs font-medium mr-3">
+                        Editar
+                      </button>
                       <button onClick={() => openDeleteModal(p)} className="text-red-500 hover:underline text-xs font-medium">
                         Eliminar
                       </button>
