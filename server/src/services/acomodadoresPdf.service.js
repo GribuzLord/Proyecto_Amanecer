@@ -52,7 +52,10 @@ async function generarPdfAcomodadores(userId, year, month) {
   }
 
   const principales = personas.filter(p => p.privilegio === 'anciano' || p.privilegio === 'siervo_ministerial');
-  const pasillos = [...personas]; // Todos pueden ser pasillo
+  const pasillos = personas.filter(p => {
+    const cons = p.acomodadorConsideraciones || {};
+    return !cons.solo_puerta;
+  });
 
   // Obtener programas del mes
   // Un programa de entre semana tiene semanaInicio y semanaFin
@@ -106,11 +109,35 @@ async function generarPdfAcomodadores(userId, year, month) {
     }
 
     const seleccionar = (lista, excluidosExtra) => {
-      let disponibles = lista.filter(p => !ocupadosIds.has(p.id) && !excluidosExtra.has(p.id));
+      let disponibles = lista.filter(p => {
+        if (ocupadosIds.has(p.id)) return false;
+        if (excluidosExtra.has(p.id)) return false;
+        
+        const cons = p.acomodadorConsideraciones || {};
+        if (cons.disponibilidad_limitada && asignacionesEsteMes.get(p.id) >= 1) return false;
+        if (cons.solo_fines_de_semana && isEntreSemana) return false;
+
+        return true;
+      });
+
       if (disponibles.length === 0) {
-        // Fallback: ignorar ocupaciones si no hay de otra
+        // Fallback 1: Ignorar ocupaciones de programa si no hay de otra, respetando consideraciones fuertes
+        disponibles = lista.filter(p => {
+          if (excluidosExtra.has(p.id)) return false;
+          
+          const cons = p.acomodadorConsideraciones || {};
+          if (cons.disponibilidad_limitada && asignacionesEsteMes.get(p.id) >= 1) return false;
+          if (cons.solo_fines_de_semana && isEntreSemana) return false;
+
+          return true;
+        });
+      }
+
+      if (disponibles.length === 0) {
+        // Fallback 2: Ignorar disponibilidad limitada y fines de semana para no dejar huecos
         disponibles = lista.filter(p => !excluidosExtra.has(p.id));
       }
+
       if (disponibles.length === 0) return null; // Nadie existe
 
       // Ordenar primero por cantidad de asignaciones este mes, luego por ultima_asignacion_acomodador

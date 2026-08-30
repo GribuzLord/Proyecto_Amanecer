@@ -16,6 +16,7 @@ const Persona = sequelize.define('Persona', {
   ultimaAsignacion: { type: DataTypes.DATEONLY, field: 'ultima_asignacion' },
   apoyaAcomodador: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'apoya_acomodador' },
   ultimaAsignacionAcomodador: { type: DataTypes.DATEONLY, field: 'ultima_asignacion_acomodador' },
+  acomodadorConsideraciones: { type: DataTypes.JSON, defaultValue: {}, field: 'acomodador_consideraciones' },
 }, {
   tableName: 'personas',
 });

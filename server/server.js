@@ -14,6 +14,7 @@ async function start() {
     await sequelize.query('ALTER TABLE programas ADD COLUMN plantilla_personalizada_vida BOOLEAN NOT NULL DEFAULT FALSE').catch(() => {});
     await sequelize.query('ALTER TABLE programas ADD COLUMN tiene_sala_auxiliar BOOLEAN NOT NULL DEFAULT TRUE').catch(() => {});
     await sequelize.query('ALTER TABLE partes_programa ADD COLUMN grupo_custom VARCHAR(60) NULL').catch(() => {});
+    await sequelize.query('ALTER TABLE personas ADD COLUMN acomodador_consideraciones JSON NULL').catch(() => {});
     
     await sequelize.query(`INSERT IGNORE INTO tipos_parte (codigo, seccion, nombre, requiere_sala, requiere_ayudante, restriccion_genero, orden) VALUES ('custom_maestros', 'maestros', 'Asignación Dinámica', TRUE, TRUE, 'ninguna', 8);`).catch(() => {});
     await sequelize.query(`INSERT IGNORE INTO tipos_parte (codigo, seccion, nombre, requiere_sala, requiere_ayudante, restriccion_genero, orden) VALUES ('custom_vida_cristiana', 'vida_cristiana', 'Participación Dinámica', FALSE, FALSE, 'ninguna', 13);`).catch(() => {});

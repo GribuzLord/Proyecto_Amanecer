@@ -81,6 +81,7 @@ export default function PersonnelList() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null, nombre: '' });
+  const [consModal, setConsModal] = useState({ show: false, persona: null });
 
   const [filterGenero, setFilterGenero] = useState('');
   const [filterPrivilegio, setFilterPrivilegio] = useState('');
@@ -177,6 +178,17 @@ export default function PersonnelList() {
     await api.delete(`/personas/${deleteModal.id}`);
     closeDeleteModal();
     cargar();
+  }
+
+  async function toggleConsideracion(persona, field) {
+    const actuales = persona.acomodadorConsideraciones || {};
+    const nuevas = { ...actuales, [field]: !actuales[field] };
+    
+    // Optimistic UI
+    setPersonas(personas.map(p => p.id === persona.id ? { ...p, acomodadorConsideraciones: nuevas } : p));
+    setConsModal(prev => ({ ...prev, persona: { ...prev.persona, acomodadorConsideraciones: nuevas } }));
+    
+    await api.patch(`/personas/${persona.id}`, { acomodadorConsideraciones: nuevas });
   }
 
   return (
@@ -346,7 +358,7 @@ export default function PersonnelList() {
                   >
                     ¿Acomodador? {sortConfig.key === 'apoyaAcomodador' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="px-4 py-2.5 font-medium">Habilitaciones</th>
+                  <th className="px-4 py-2.5 font-medium text-center">Consideraciones</th>
                   <th className="px-4 py-2.5"></th>
                 </tr>
               </thead>
@@ -377,7 +389,17 @@ export default function PersonnelList() {
                         <span className="text-slate-300">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-slate-500">{p.habilitaciones.length} partes</td>
+                    <td className="px-4 py-2.5 text-center">
+                      {p.apoyaAcomodador && (
+                        <button 
+                          onClick={() => setConsModal({ show: true, persona: p })}
+                          title="Consideraciones avanzadas"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-brand-50 hover:text-brand-600 transition-colors"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
+                        </button>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 text-right">
                       <button onClick={() => openDeleteModal(p)} className="text-red-500 hover:underline text-xs font-medium">
                         Eliminar
@@ -422,6 +444,76 @@ export default function PersonnelList() {
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
               >
                 Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Consideraciones */}
+      {consModal.show && consModal.persona && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-slate-800 mb-1">Opciones Avanzadas</h3>
+              <p className="text-sm text-slate-500 mb-6">Configura restricciones para <strong>{consModal.persona.nombre}</strong> como acomodador.</p>
+
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="flex items-center h-5">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                      checked={consModal.persona.acomodadorConsideraciones?.disponibilidad_limitada || false}
+                      onChange={() => toggleConsideracion(consModal.persona, 'disponibilidad_limitada')}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-brand-600 transition-colors">Disponibilidad limitada</span>
+                    <span className="text-xs text-slate-500">Solo se le asignará una vez por mes en el programa.</span>
+                  </div>
+                </label>
+
+                {(consModal.persona.privilegio === 'anciano' || consModal.persona.privilegio === 'siervo_ministerial') && (
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="flex items-center h-5">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                        checked={consModal.persona.acomodadorConsideraciones?.solo_puerta || false}
+                        onChange={() => toggleConsideracion(consModal.persona, 'solo_puerta')}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-brand-600 transition-colors">Solo puerta principal</span>
+                      <span className="text-xs text-slate-500">Exclusivo de ancianos/ministeriales. No será asignado en los pasillos.</span>
+                    </div>
+                  </label>
+                )}
+
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="flex items-center h-5">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                      checked={consModal.persona.acomodadorConsideraciones?.solo_fines_de_semana || false}
+                      onChange={() => toggleConsideracion(consModal.persona, 'solo_fines_de_semana')}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-brand-600 transition-colors">Solo fines de semana</span>
+                    <span className="text-xs text-slate-500">No se le asignará acomodador en las reuniones de entre semana.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+            
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end">
+              <button 
+                onClick={() => setConsModal({ show: false, persona: null })}
+                className="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors shadow-sm"
+              >
+                Cerrar
               </button>
             </div>
           </div>
