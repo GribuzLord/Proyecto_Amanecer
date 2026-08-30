@@ -181,7 +181,14 @@ export default function PersonnelList() {
     });
     setEditingId(persona.id);
     setShowForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // El scroll container está en el AppLayout
+    const scrollContainer = document.getElementById('main-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Fallback
+    }
   }
 
   function openDeleteModal(persona) {
