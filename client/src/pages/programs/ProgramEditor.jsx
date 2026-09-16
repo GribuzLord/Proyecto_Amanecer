@@ -237,23 +237,21 @@ export default function ProgramEditor() {
       }
     }
 
-    if (secKey === 'maestros') {
-      const duplicados = partesSec.filter(p => p.id !== parte.id && p.personaId === parte.personaId);
-      if (duplicados.length > 0) {
-        // Checar si es el mismo tema en la misma sala (significa que es el ayudante de sí mismo)
-        const mismoTema = duplicados.find(p => p.tipoParte.codigo === parte.tipoParte.codigo && p.sala === parte.sala);
-        if (mismoTema) {
-          return "⚠️ El titular y el ayudante no pueden ser la misma persona.";
-        }
-        // Si es otro tema o en otra sala, es que pasa dos veces
-        return "⚠️ Esta persona ya tiene otra participación en la sección de Maestros.";
-      }
-    }
+    if (['tesoros', 'maestros', 'vida_cristiana'].includes(secKey)) {
+      const duplicadosGeneral = todasLasPartes.filter(p => 
+        p.id !== parte.id && 
+        p.personaId === parte.personaId && 
+        ['tesoros', 'maestros', 'vida_cristiana'].includes(p.tipoParte.seccion)
+      );
 
-    if (secKey === 'vida_cristiana') {
-      const duplicados = partesSec.filter(p => p.id !== parte.id && p.personaId === parte.personaId);
-      if (duplicados.length > 0) {
-        return "⚠️ Esta persona ya tiene otra participación en Vida Cristiana.";
+      if (duplicadosGeneral.length > 0) {
+        if (secKey === 'maestros') {
+          const mismoTema = duplicadosGeneral.find(p => p.tipoParte.codigo === parte.tipoParte.codigo && p.sala === parte.sala);
+          if (mismoTema) {
+            return "⚠️ El titular y el ayudante no pueden ser la misma persona.";
+          }
+        }
+        return "⚠️ Esta persona ya tiene otra participación en la reunión (Tesoros, Maestros o Vida Cristiana).";
       }
     }
 
