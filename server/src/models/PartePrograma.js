@@ -11,6 +11,7 @@ const PartePrograma = sequelize.define('PartePrograma', {
   personaId: { type: DataTypes.INTEGER, field: 'persona_id' },
   textoLibre: { type: DataTypes.STRING(150), field: 'texto_libre' },
   grupoCustom: { type: DataTypes.STRING(60), field: 'grupo_custom' },
+  isQueDiria: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'is_que_diria' },
   orden: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
 }, {
   tableName: 'partes_programa',

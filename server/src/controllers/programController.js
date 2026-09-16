@@ -171,10 +171,12 @@ exports.toggleCustomSection = catchAsync(async (req, res, next) => {
 // POST /api/programas/:id/partes-custom
 // Añade una parte dinámica a una sección personalizada
 exports.addCustomParte = catchAsync(async (req, res, next) => {
-  const { seccion, requiereAyudante, requiereSala, titulo, esEstudioLibro } = req.body;
-  const { TipoParte, PartePrograma } = require('../models');
+  const { id } = req.params;
+  const { seccion, requiereAyudante, requiereSala, titulo, esEstudioLibro, esDiscurso, esQueDiria } = req.body;
+  const userId = req.user.id;
 
-  const programaId = req.params.id;
+  const programaId = parseInt(id, 10);
+  const { TipoParte, PartePrograma } = require('../models');
 
   if (seccion === 'vida_cristiana' && esEstudioLibro) {
     const tipoEstudio = await TipoParte.findOne({ where: { codigo: 'estudio_congregacion' } });
@@ -238,6 +240,7 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
       rolSlot: 'titular',
       textoLibre: 'Por asignar',
       grupoCustom,
+      isQueDiria: esQueDiria || false,
       orden: tipoParte.orden
     });
 
@@ -250,6 +253,7 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
         rolSlot: 'ayudante',
         textoLibre: 'Por asignar',
         grupoCustom,
+        isQueDiria: esQueDiria || false,
         orden: tipoParte.orden
       });
     }
