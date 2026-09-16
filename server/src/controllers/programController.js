@@ -235,7 +235,7 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
     partesACrear.push({
       programaId,
       tipoParteId: tipoParte.id,
-      titulo: titulo || 'Asignación Nueva',
+      titulo: titulo || (esQueDiria ? '¿Qué diría?' : (esDiscurso ? 'Discurso' : 'Asignación Nueva')),
       sala,
       rolSlot: 'titular',
       textoLibre: 'Por asignar',
@@ -248,7 +248,7 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
       partesACrear.push({
         programaId,
         tipoParteId: tipoParte.id,
-        titulo: titulo || 'Asignación Nueva',
+        titulo: titulo || (esQueDiria ? '¿Qué diría?' : (esDiscurso ? 'Discurso' : 'Asignación Nueva')),
         sala,
         rolSlot: 'ayudante',
         textoLibre: 'Por asignar',

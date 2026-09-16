@@ -420,14 +420,14 @@ export default function ProgramEditor() {
                   const candidatos = getCandidatos(parte);
                   const mostrarTitulo = !codigosSinTitulo.includes(parte.tipoParte.codigo) && !(parte.tipoParte.codigo === 'discurso_estudiante' && programa.esDiscursoMaestros);
 
-                  const isFirstDiscurso = parte.tipoParte.codigo === 'discurso_estudiante' && partesSec.findIndex(p => p.tipoParte.codigo === 'discurso_estudiante') === index;
+                  const isFirstDiscurso = parte.tipoParte.codigo === 'discurso_estudiante' && !parte.grupoCustom && partesSec.findIndex(p => p.tipoParte.codigo === 'discurso_estudiante' && !p.grupoCustom) === index;
 
                   const content = (
                     <div key={parte.id}>
                       <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 hover:bg-slate-50/50 transition-colors">
                         <div className="w-full lg:w-1/3 shrink-0">
                         <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                          {parte.tipoParte.nombre}
+                          {parte.grupoCustom && parte.tipoParte.codigo === 'discurso_estudiante' ? 'Discurso' : parte.tipoParte.nombre}
                           {parte.sala === 'auxiliar' && (
                             <span className="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider whitespace-nowrap">
                               Sala Auxiliar
