@@ -250,6 +250,13 @@ export default function ProgramEditor() {
       }
     }
 
+    if (secKey === 'vida_cristiana') {
+      const duplicados = partesSec.filter(p => p.id !== parte.id && p.personaId === parte.personaId);
+      if (duplicados.length > 0) {
+        return "⚠️ Esta persona ya tiene otra participación en Vida Cristiana.";
+      }
+    }
+
     return null;
   };
 
