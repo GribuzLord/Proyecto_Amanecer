@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/axios';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 const codigosSinTitulo = [
   'presidente',
@@ -455,21 +456,16 @@ export default function ProgramEditor() {
                         )}
 
                         <div className={`relative w-full ${mostrarTitulo ? 'sm:w-72' : 'sm:w-1/2'} shrink-0`}>
-                          <select
+                          <CustomSelect 
                             value={parte.personaId || ''}
-                            onChange={(e) => guardarParte(parte, { personaId: e.target.value })}
-                            className="w-full appearance-none rounded-xl border border-slate-300 px-4 py-2.5 pr-10 text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none font-medium text-slate-700 disabled:bg-slate-50 disabled:text-slate-500 transition-shadow text-ellipsis"
-                          >
-                            <option value="" className="text-slate-400">-- Por asignar --</option>
-                            {candidatos.map(c => (
-                              <option key={c.id} value={c.id}>
-                                {c.nombre} {getTiempoTranscurrido(c.ultimaAsignacion)}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                          </div>
+                            onChange={(val) => guardarParte(parte, { personaId: val })}
+                            placeholder="-- Por asignar --"
+                            options={candidatos.map(c => ({
+                              value: c.id,
+                              label: c.nombre,
+                              subLabel: getTiempoTranscurrido(c.ultimaAsignacion)
+                            }))}
+                          />
                         </div>
                         {parte.grupoCustom && (
                           <button onClick={() => promptDeleteCustom(parte.grupoCustom)} className="text-red-400 hover:text-red-600 shrink-0 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar asignación">
