@@ -384,7 +384,7 @@ export default function ProgramEditor() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        {orderSecciones.map(secKey => {
+        {orderSecciones.map((secKey, secIndex) => {
           const isMaestros = secKey === 'maestros';
           const isVida = secKey === 'vida_cristiana';
           const isCustomizable = isMaestros || isVida;
@@ -398,7 +398,7 @@ export default function ProgramEditor() {
           const config = seccionConfig[secKey];
 
           return (
-            <div key={secKey}>
+            <div key={secKey} className="relative" style={{ zIndex: 100 - secIndex }}>
               <div className={`${config.bg} ${config.text} px-5 py-2.5 font-bold uppercase tracking-widest text-xs flex justify-between items-center`}>
                 <span>{config.titulo}</span>
                 {isCustomizable && (
@@ -429,7 +429,7 @@ export default function ProgramEditor() {
                   const isFirstDiscurso = parte.tipoParte.codigo === 'discurso_estudiante' && !parte.grupoCustom && partesSec.findIndex(p => p.tipoParte.codigo === 'discurso_estudiante' && !p.grupoCustom) === index;
 
                   const content = (
-                    <div key={parte.id}>
+                    <div key={parte.id} className="relative" style={{ zIndex: 50 - index }}>
                       <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 hover:bg-slate-50/50 transition-colors">
                         <div className="w-full lg:w-1/3 shrink-0">
                         <p className="text-sm font-bold text-slate-800 flex items-center gap-2">

@@ -4,6 +4,10 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchTimeoutRef = useRef(null);
+  const listRef = useRef(null);
+
   // Cerrar al hacer clic fuera del componente
   useEffect(() => {
     function handleClickOutside(event) {
@@ -17,6 +21,33 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
     };
   }, []);
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      setIsOpen(false);
+      return;
+    }
+
+    if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      const char = e.key.toLowerCase();
+      const newTerm = searchTerm + char;
+      setSearchTerm(newTerm);
+
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = setTimeout(() => {
+        setSearchTerm('');
+      }, 500);
+
+      const foundOpt = options.find(opt => opt.label.toLowerCase().startsWith(newTerm));
+      if (foundOpt) {
+        onChange(foundOpt.value);
+        if (isOpen && listRef.current) {
+          const el = listRef.current.querySelector(`[data-value="${foundOpt.value}"]`);
+          if (el) el.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    }
+  };
+
   const selectedOption = options.find(opt => String(opt.value) === String(value));
 
   return (
@@ -24,6 +55,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
       {/* Botón que actúa como el input visible */}
       <button
         type="button"
+        onKeyDown={handleKeyDown}
         onClick={() => setIsOpen(!isOpen)}
         className="w-full text-left appearance-none rounded-xl border border-slate-300 px-4 py-2.5 pr-10 text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none font-medium transition-shadow text-ellipsis overflow-hidden whitespace-nowrap"
       >
@@ -46,7 +78,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
       {/* Lista desplegable animada */}
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-100">
-          <ul className="max-h-60 overflow-y-auto py-1 custom-scrollbar">
+          <ul className="max-h-60 overflow-y-auto py-1 custom-scrollbar" ref={listRef}>
             {/* Opción vacía por defecto */}
             <li
               className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${!value ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-500 hover:bg-slate-50'}`}
@@ -64,6 +96,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
               return (
                 <li
                   key={opt.value}
+                  data-value={opt.value}
                   onClick={() => {
                     onChange(opt.value);
                     setIsOpen(false);
