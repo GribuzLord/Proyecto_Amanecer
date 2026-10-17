@@ -75,7 +75,7 @@ export default function ProgramEditor() {
       await api.post(`/programas/${id}/finalizar`);
       setActualizarModal(false);
       await cargar();
-      setToastMensaje('¡Programa y rotaciones re-sincronizadas correctamente!');
+      setToastMensaje('¡Programa actualizado correctamente!');
       setTimeout(() => setToastMensaje(''), 4000);
     } catch (err) {
       console.error('Error al actualizar programa:', err);
@@ -213,11 +213,11 @@ export default function ProgramEditor() {
       }
 
       let restriccion = tipoParte.restriccionGenero;
-      
+
       if (tipoParte.codigo === 'discurso_estudiante') {
         restriccion = 'ninguna';
       }
-      
+
       if (restriccion !== 'ninguna' && p.genero !== restriccion) return false;
 
       // Para las asignaciones dinámicas en maestros
@@ -245,7 +245,7 @@ export default function ProgramEditor() {
 
   const getDuplicateWarning = (parte, secKey, partesSec) => {
     if (!parte.personaId) return null;
-    
+
     const todasLasPartes = programa.partes || [];
 
     // Regla 1: El presidente y consejero no pueden tener asignaciones en Tesoros o Maestros
@@ -267,7 +267,7 @@ export default function ProgramEditor() {
       const esLectorBiblia = todasLasPartes.some(p => p.id !== parte.id && p.personaId === parte.personaId && p.tipoParte.codigo === 'lectura_biblia');
       if (esLectorBiblia) return "⚠️ El lector de la Biblia no puede tener asignaciones en Maestros.";
     }
-    
+
     if (secKey === 'atalaya') {
       const duplicados = partesSec.filter(p => p.id !== parte.id && p.personaId === parte.personaId);
       if (duplicados.length > 0) {
@@ -276,9 +276,9 @@ export default function ProgramEditor() {
     }
 
     if (['tesoros', 'maestros', 'vida_cristiana'].includes(secKey)) {
-      const duplicadosGeneral = todasLasPartes.filter(p => 
-        p.id !== parte.id && 
-        p.personaId === parte.personaId && 
+      const duplicadosGeneral = todasLasPartes.filter(p =>
+        p.id !== parte.id &&
+        p.personaId === parte.personaId &&
         ['tesoros', 'maestros', 'vida_cristiana'].includes(p.tipoParte.seccion)
       );
 
@@ -480,55 +480,55 @@ export default function ProgramEditor() {
                     <div key={parte.id} className="relative" style={{ zIndex: 50 - index }}>
                       <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 hover:bg-slate-50/50 transition-colors">
                         <div className="w-full lg:w-1/3 shrink-0">
-                        <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                          {parte.isQueDiria ? '¿Qué diría?' : (parte.grupoCustom && parte.tipoParte.codigo === 'discurso_estudiante' ? 'Discurso' : parte.tipoParte.nombre)}
-                          {parte.sala === 'auxiliar' && (
-                            <span className="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider whitespace-nowrap">
-                              Sala Auxiliar
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-1">
-                          {parte.sala === 'principal' ? `Sala Principal · ` : ''}{parte.rolSlot}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row gap-3 flex-1 justify-end min-w-0">
-                        {mostrarTitulo && (
-                          <input
-                            placeholder="Título / tema de la asignación"
-                            defaultValue={parte.titulo || ''}
-                            onBlur={(e) => guardarParte(parte, { titulo: e.target.value })}
-                            className="flex-1 min-w-0 rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 transition-shadow text-ellipsis"
-                          />
-                        )}
-
-                        <div className={`relative w-full ${mostrarTitulo ? 'sm:w-72' : 'sm:w-1/2'} shrink-0`}>
-                          <CustomSelect 
-                            value={parte.personaId || ''}
-                            onChange={(val) => guardarParte(parte, { personaId: val })}
-                            placeholder="-- Por asignar --"
-                            options={candidatos.map(c => ({
-                              value: c.id,
-                              label: c.nombre,
-                              subLabel: getTiempoTranscurrido(c.ultimaAsignacion)
-                            }))}
-                          />
+                          <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            {parte.isQueDiria ? '¿Qué diría?' : (parte.grupoCustom && parte.tipoParte.codigo === 'discurso_estudiante' ? 'Discurso' : parte.tipoParte.nombre)}
+                            {parte.sala === 'auxiliar' && (
+                              <span className="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider whitespace-nowrap">
+                                Sala Auxiliar
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-1">
+                            {parte.sala === 'principal' ? `Sala Principal · ` : ''}{parte.rolSlot}
+                          </p>
                         </div>
-                        {parte.grupoCustom && (
-                          <button onClick={() => promptDeleteCustom(parte.grupoCustom)} className="text-red-400 hover:text-red-600 shrink-0 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar asignación">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                          </button>
-                        )}
+
+                        <div className="flex flex-col sm:flex-row gap-3 flex-1 justify-end min-w-0">
+                          {mostrarTitulo && (
+                            <input
+                              placeholder="Título / tema de la asignación"
+                              defaultValue={parte.titulo || ''}
+                              onBlur={(e) => guardarParte(parte, { titulo: e.target.value })}
+                              className="flex-1 min-w-0 rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 transition-shadow text-ellipsis"
+                            />
+                          )}
+
+                          <div className={`relative w-full ${mostrarTitulo ? 'sm:w-72' : 'sm:w-1/2'} shrink-0`}>
+                            <CustomSelect
+                              value={parte.personaId || ''}
+                              onChange={(val) => guardarParte(parte, { personaId: val })}
+                              placeholder="-- Por asignar --"
+                              options={candidatos.map(c => ({
+                                value: c.id,
+                                label: c.nombre,
+                                subLabel: getTiempoTranscurrido(c.ultimaAsignacion)
+                              }))}
+                            />
+                          </div>
+                          {parte.grupoCustom && (
+                            <button onClick={() => promptDeleteCustom(parte.grupoCustom)} className="text-red-400 hover:text-red-600 shrink-0 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar asignación">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                          )}
+                        </div>
                       </div>
+                      {getDuplicateWarning(parte, secKey, partesSec) && (
+                        <div className="px-5 pb-4 -mt-2 lg:text-right">
+                          <p className="text-xs text-red-500 font-semibold">{getDuplicateWarning(parte, secKey, partesSec)}</p>
+                        </div>
+                      )}
                     </div>
-                    {getDuplicateWarning(parte, secKey, partesSec) && (
-                      <div className="px-5 pb-4 -mt-2 lg:text-right">
-                        <p className="text-xs text-red-500 font-semibold">{getDuplicateWarning(parte, secKey, partesSec)}</p>
-                      </div>
-                    )}
-                  </div>
-                );
+                  );
 
                   if (isFirstDiscurso) {
                     return (
@@ -560,7 +560,7 @@ export default function ProgramEditor() {
               {isCustomEnabled && !hideAddButton && (
                 <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-center">
                   <button onClick={() => setCustomModal({ show: true, seccion: secKey, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false, esDiscurso: false, esQueDiria: false })} className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     Agregar asignación dinámica
                   </button>
                 </div>
@@ -678,14 +678,14 @@ export default function ProgramEditor() {
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
           <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-lg font-bold text-slate-800 mb-4">Nueva Asignación</h3>
-            
+
             <label className="block text-sm font-medium text-slate-700 mb-1">Título / Tema</label>
-            <input 
-              type="text" 
-              value={customModal.titulo} 
-              onChange={e => setCustomModal({...customModal, titulo: e.target.value})} 
-              className="w-full mb-4 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:opacity-50" 
-              placeholder="Ej: Demostración" 
+            <input
+              type="text"
+              value={customModal.titulo}
+              onChange={e => setCustomModal({ ...customModal, titulo: e.target.value })}
+              className="w-full mb-4 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:opacity-50"
+              placeholder="Ej: Demostración"
               disabled={customModal.seccion === 'vida_cristiana' && customModal.esEstudioLibro}
             />
 
@@ -693,12 +693,12 @@ export default function ProgramEditor() {
               <>
                 <label className="flex items-start gap-3 cursor-pointer group mb-4">
                   <div className="flex items-center h-5">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer disabled:opacity-50"
-                      checked={customModal.esDiscurso} 
+                      checked={customModal.esDiscurso}
                       disabled={customModal.esQueDiria}
-                      onChange={e => setCustomModal({...customModal, esDiscurso: e.target.checked, requiereAyudante: e.target.checked ? false : customModal.requiereAyudante})} 
+                      onChange={e => setCustomModal({ ...customModal, esDiscurso: e.target.checked, requiereAyudante: e.target.checked ? false : customModal.requiereAyudante })}
                     />
                   </div>
                   <div className="flex flex-col">
@@ -709,12 +709,12 @@ export default function ProgramEditor() {
 
                 <label className="flex items-start gap-3 cursor-pointer group mb-4">
                   <div className="flex items-center h-5">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer disabled:opacity-50"
-                      checked={customModal.esQueDiria} 
+                      checked={customModal.esQueDiria}
                       disabled={customModal.esDiscurso}
-                      onChange={e => setCustomModal({...customModal, esQueDiria: e.target.checked})} 
+                      onChange={e => setCustomModal({ ...customModal, esQueDiria: e.target.checked })}
                     />
                   </div>
                   <div className="flex flex-col">
@@ -725,23 +725,23 @@ export default function ProgramEditor() {
 
                 <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl border border-slate-200 hover:border-brand-200 hover:bg-brand-50/50 transition-colors mb-4">
                   <span className={`text-sm font-medium ${customModal.esDiscurso ? 'text-slate-400' : 'text-slate-700'}`}>¿Tendrá 2 personas (Ayudante)?</span>
-                  <input 
-                    type="checkbox" 
-                    checked={customModal.requiereAyudante} 
-                    onChange={e => setCustomModal({...customModal, requiereAyudante: e.target.checked})} 
+                  <input
+                    type="checkbox"
+                    checked={customModal.requiereAyudante}
+                    onChange={e => setCustomModal({ ...customModal, requiereAyudante: e.target.checked })}
                     disabled={customModal.esDiscurso}
-                    className="w-4 h-4 text-brand-600 rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50 cursor-pointer" 
+                    className="w-4 h-4 text-brand-600 rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
                   />
                 </label>
 
                 {programa.tieneSalaAuxiliar && (
                   <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl border border-slate-200 hover:border-brand-200 hover:bg-brand-50/50 transition-colors mb-6">
                     <span className="text-sm font-medium text-slate-700">¿Se presentará en ambas salas?</span>
-                    <input 
-                      type="checkbox" 
-                      checked={customModal.requiereSala} 
-                      onChange={e => setCustomModal({...customModal, requiereSala: e.target.checked})} 
-                      className="w-4 h-4 text-brand-600 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" 
+                    <input
+                      type="checkbox"
+                      checked={customModal.requiereSala}
+                      onChange={e => setCustomModal({ ...customModal, requiereSala: e.target.checked })}
+                      className="w-4 h-4 text-brand-600 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
                     />
                   </label>
                 )}
@@ -751,24 +751,24 @@ export default function ProgramEditor() {
             {customModal.seccion === 'vida_cristiana' && (
               <div className="flex items-center justify-between mb-6">
                 <span className="text-sm font-medium text-slate-700">¿Es el estudio del libro? (Conductor y lector)</span>
-                <input 
-                  type="checkbox" 
-                  checked={customModal.esEstudioLibro} 
-                  onChange={e => setCustomModal({...customModal, esEstudioLibro: e.target.checked, titulo: e.target.checked ? '' : customModal.titulo})} 
-                  className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500" 
+                <input
+                  type="checkbox"
+                  checked={customModal.esEstudioLibro}
+                  onChange={e => setCustomModal({ ...customModal, esEstudioLibro: e.target.checked, titulo: e.target.checked ? '' : customModal.titulo })}
+                  className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
                 />
               </div>
             )}
 
             <div className="flex justify-end gap-3">
-              <button 
-                onClick={() => setCustomModal({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false, esDiscurso: false, esQueDiria: false })} 
+              <button
+                onClick={() => setCustomModal({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false, esDiscurso: false, esQueDiria: false })}
                 className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
-              <button 
-                onClick={handleAddCustom} 
+              <button
+                onClick={handleAddCustom}
                 className="px-4 py-2 text-sm text-white bg-brand-600 hover:bg-brand-700 rounded-lg font-medium transition-colors"
               >
                 Agregar
