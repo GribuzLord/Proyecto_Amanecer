@@ -633,7 +633,7 @@ export default function ProgramEditor() {
               </div>
               <h3 className="text-lg font-bold text-slate-800 mb-2">Actualizar programa</h3>
               <p className="text-sm text-slate-500">
-                Al actualizar, se re-sincronizará la fecha de asignación de todos los participantes y se actualizarán las exclusiones para el módulo de acomodadores. ¿Deseas continuar?
+                Al actualizar, se re-sincronizará la fecha de asignación de todos los participantes. ¿Deseas continuar?
               </p>
             </div>
             <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
