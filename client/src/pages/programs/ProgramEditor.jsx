@@ -24,6 +24,9 @@ export default function ProgramEditor() {
   const [programa, setPrograma] = useState(null);
   const [personnel, setPersonnel] = useState([]);
   const [finalizarModal, setFinalizarModal] = useState(false);
+  const [actualizarModal, setActualizarModal] = useState(false);
+  const [actualizando, setActualizando] = useState(false);
+  const [toastMensaje, setToastMensaje] = useState('');
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [descargandoHojitas, setDescargandoHojitas] = useState(false);
   const [customModal, setCustomModal] = useState({ show: false, seccion: null, requiereAyudante: false, requiereSala: false, titulo: '', esEstudioLibro: false, esDiscurso: false, esQueDiria: false });
@@ -61,7 +64,25 @@ export default function ProgramEditor() {
   async function confirmarFinalizar() {
     await api.post(`/programas/${id}/finalizar`);
     setFinalizarModal(false);
-    cargar();
+    await cargar();
+    setToastMensaje('¡Programa finalizado y rotaciones registradas!');
+    setTimeout(() => setToastMensaje(''), 4000);
+  }
+
+  async function confirmarActualizar() {
+    try {
+      setActualizando(true);
+      await api.post(`/programas/${id}/finalizar`);
+      setActualizarModal(false);
+      await cargar();
+      setToastMensaje('¡Programa y rotaciones re-sincronizadas correctamente!');
+      setTimeout(() => setToastMensaje(''), 4000);
+    } catch (err) {
+      console.error('Error al actualizar programa:', err);
+      alert('Hubo un error al actualizar el programa.');
+    } finally {
+      setActualizando(false);
+    }
   }
 
   function promptToggleCustom(seccion, enabled) {
@@ -369,13 +390,24 @@ export default function ProgramEditor() {
             )}
             {descargandoPdf ? 'Generando...' : 'PDF'}
           </button>
-          {programa.estado === 'borrador' && (
+          {programa.estado === 'borrador' ? (
             <button
               onClick={() => setFinalizarModal(true)}
               className="flex-1 md:flex-none bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
               Finalizar
+            </button>
+          ) : (
+            <button
+              onClick={() => setActualizarModal(true)}
+              className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+              title="Guardar modificaciones y re-sincronizar rotaciones"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Actualizar
             </button>
           )}
 
@@ -569,7 +601,7 @@ export default function ProgramEditor() {
               <h3 className="text-lg font-bold text-slate-800 mb-2">Finalizar programa</h3>
               <p className="text-sm text-slate-500">
                 Al finalizar el programa, se actualizará el historial de rotación del personal para que no se les asigne repetidamente.
-                Aún podrás hacer modificaciones manuales si lo necesitas. ¿Deseas continuar?
+                Aún podrás hacer modificaciones manuales y actualizarlas si lo necesitas. ¿Deseas continuar?
               </p>
             </div>
             <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
@@ -587,6 +619,58 @@ export default function ProgramEditor() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {actualizarModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Actualizar programa</h3>
+              <p className="text-sm text-slate-500">
+                Al actualizar, se re-sincronizará la fecha de asignación de todos los participantes y se actualizarán las exclusiones para el módulo de acomodadores. ¿Deseas continuar?
+              </p>
+            </div>
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setActualizarModal(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarActualizar}
+                disabled={actualizando}
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm flex items-center gap-2"
+              >
+                {actualizando ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Actualizando...</span>
+                  </>
+                ) : (
+                  'Sí, actualizar'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toastMensaje && (
+        <div className="fixed bottom-6 right-6 z-[1000] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <svg className="w-5 h-5 text-emerald-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm font-medium">{toastMensaje}</span>
         </div>
       )}
 

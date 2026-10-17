@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Persona, TipoParte, Programa, PartePrograma } = require('../models');
+const { sequelize, Persona, TipoParte, Programa, PartePrograma } = require('../models');
 
 const habilitacionesMap = {
   'presidente': ['Presidente'],
@@ -110,24 +110,36 @@ async function generarPrograma({ userId, semanaInicio, semanaFin }) {
 }
 
 /**
- * Marca el programa como finalizado y actualiza ultima_asignacion
- * de cada persona incluida, para que la próxima generación rote correctamente.
- * Solo aquí se "compromete" la rotación (los borradores no afectan el historial).
+ * Marca el programa como finalizado (o actualiza sus asignaciones) y re-sincroniza
+ * ultima_asignacion de cada persona de la congregación de forma precisa.
+ * Cada persona tendrá como ultima_asignacion la fecha del programa finalizado
+ * más reciente en el que participe (o NULL si no tiene ninguna participación finalizada).
  */
 async function finalizarPrograma(programaId, userId) {
   const programa = await Programa.findOne({ where: { id: programaId, userId } });
   if (!programa) return null;
 
-  const partes = await PartePrograma.findAll({ where: { programaId } });
-  const personaIds = [...new Set(partes.map((p) => p.personaId).filter(Boolean))];
-
-  await Persona.update(
-    { ultimaAsignacion: programa.semanaInicio },
-    { where: { id: personaIds } }
-  );
-
   programa.estado = 'finalizado';
   await programa.save();
+
+  // Sincronización precisa y global de ultima_asignacion para toda la congregación
+  await sequelize.query(`
+    UPDATE personas p
+    LEFT JOIN (
+      SELECT pp.persona_id, MAX(pr.semana_inicio) as ultima_fecha
+      FROM partes_programa pp
+      JOIN programas pr ON pp.programa_id = pr.id
+      WHERE pr.user_id = :userId 
+        AND pr.estado = 'finalizado' 
+        AND pp.persona_id IS NOT NULL
+      GROUP BY pp.persona_id
+    ) ult ON p.id = ult.persona_id
+    SET p.ultima_asignacion = ult.ultima_fecha
+    WHERE p.user_id = :userId
+  `, {
+    replacements: { userId }
+  });
+
   return programa;
 }
 
