@@ -175,10 +175,26 @@ export default function ProgramEditor() {
     const tipoParte = parte.tipoParte;
     return personnel.filter(p => {
       if (!p.activo) return false;
+
+      // 1. Asignación dinámica en Maestros marcada como discurso: solo varones bautizados
+      const esDiscursoDinamico = parte.grupoCustom && (
+        parte.tipoParte.codigo === 'discurso_estudiante' ||
+        (parte.tipoParte.codigo === 'custom_maestros' && parte.titulo?.toLowerCase().includes('discurso'))
+      );
+
+      if (esDiscursoDinamico) {
+        return p.genero === 'M' && p.privilegio !== 'publicador_no_bautizado';
+      }
+
+      // 2. Asignación fija (Punto 6) en Maestros cuando está marcada como Discurso: solo varones bautizados
+      if (tipoParte.codigo === 'discurso_estudiante' && !parte.grupoCustom && programa?.esDiscursoMaestros) {
+        return p.genero === 'M' && p.privilegio !== 'publicador_no_bautizado';
+      }
+
       let restriccion = tipoParte.restriccionGenero;
       
       if (tipoParte.codigo === 'discurso_estudiante') {
-        restriccion = programa?.esDiscursoMaestros ? 'M' : 'ninguna';
+        restriccion = 'ninguna';
       }
       
       if (restriccion !== 'ninguna' && p.genero !== restriccion) return false;
@@ -488,7 +504,7 @@ export default function ProgramEditor() {
                         <div className="p-5 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100">
                           <div>
                             <p className="text-sm font-bold text-slate-800">¿La última asignación de Maestros será un Discurso?</p>
-                            <p className="text-xs text-slate-500 mt-0.5">Si se marca que sí, se eliminarán los ayudantes, el título, y se restringirá a varones.</p>
+                            <p className="text-xs text-slate-500 mt-0.5">Si se marca que sí, se eliminarán los ayudantes, el título, y se restringirá a varones bautizados.</p>
                           </div>
                           <button
                             onClick={async () => {
@@ -603,7 +619,7 @@ export default function ProgramEditor() {
                   </div>
                   <div className="flex flex-col">
                     <span className={`text-sm font-medium ${customModal.esQueDiria ? 'text-slate-400' : 'text-slate-700 group-hover:text-brand-600 transition-colors'}`}>Es discurso</span>
-                    <p className="text-xs text-slate-500 mt-0.5">Si se marca que sí, se eliminarán los ayudantes, el título, y se restringirá a varones.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Si se marca que sí, se eliminarán los ayudantes, el título, y se restringirá a varones bautizados.</p>
                   </div>
                 </label>
 

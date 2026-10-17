@@ -20,6 +20,7 @@ yarn-error.log*
 # Build and IDE
 dist/
 build/
+.cache/
 .DS_Store
 .idea/
 .vscode/
