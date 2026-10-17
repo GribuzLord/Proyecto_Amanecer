@@ -1,12 +1,20 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+
+function normalizeStr(str) {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
 
 export default function CustomSelect({ value, onChange, options, placeholder = '-- Seleccionar --' }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
+  const buttonRef = useRef(null);
+  const listRef = useRef(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const searchTimeoutRef = useRef(null);
-  const listRef = useRef(null);
 
   // Cerrar al hacer clic fuera del componente
   useEffect(() => {
@@ -21,12 +29,44 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
     };
   }, []);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
       setIsOpen(false);
       return;
     }
 
+    if (e.key === 'Enter') {
+      if (isOpen) {
+        e.preventDefault();
+        setIsOpen(false);
+      }
+      return;
+    }
+
+    // Navegación con flechas (Arriba / Abajo)
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!isOpen) {
+        setIsOpen(true);
+        return;
+      }
+      const currentIndex = options.findIndex(opt => String(opt.value) === String(value));
+      let nextIndex = e.key === 'ArrowDown' ? currentIndex + 1 : currentIndex - 1;
+      if (nextIndex >= options.length) nextIndex = 0;
+      if (nextIndex < 0) nextIndex = options.length - 1;
+
+      const nextOpt = options[nextIndex];
+      if (nextOpt) {
+        onChange(nextOpt.value);
+        if (listRef.current) {
+          const el = listRef.current.querySelector(`[data-value="${nextOpt.value}"]`);
+          if (el) el.scrollIntoView({ block: 'nearest' });
+        }
+      }
+      return;
+    }
+
+    // Búsqueda predictiva por texto
     if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
       const char = e.key.toLowerCase();
       const newTerm = searchTerm + char;
@@ -35,9 +75,10 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
       searchTimeoutRef.current = setTimeout(() => {
         setSearchTerm('');
-      }, 500);
+      }, 700);
 
-      const foundOpt = options.find(opt => opt.label.toLowerCase().startsWith(newTerm));
+      const cleanTerm = normalizeStr(newTerm);
+      const foundOpt = options.find(opt => normalizeStr(opt.label).startsWith(cleanTerm));
       if (foundOpt) {
         onChange(foundOpt.value);
         if (isOpen && listRef.current) {
@@ -46,7 +87,25 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
         }
       }
     }
-  };
+  }, [isOpen, searchTerm, options, value, onChange]);
+
+  // Listener global mientras el menú esté desplegado:
+  // En Safari, los botones no ganan foco al hacer clic. Este listener asegura que
+  // cualquier tecla presionada mientras el selector esté abierto sea capturada.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleGlobalKeyDown(e) {
+      // No interceptar si el usuario está escribiendo en un input o textarea real
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      handleKeyDown(e);
+    }
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [isOpen, handleKeyDown]);
 
   const selectedOption = options.find(opt => String(opt.value) === String(value));
 
@@ -54,9 +113,13 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
     <div className="relative w-full" ref={containerRef}>
       {/* Botón que actúa como el input visible */}
       <button
+        ref={buttonRef}
         type="button"
         onKeyDown={handleKeyDown}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          buttonRef.current?.focus();
+        }}
         className="w-full text-left appearance-none rounded-xl border border-slate-300 px-4 py-2.5 pr-10 text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none font-medium transition-shadow text-ellipsis overflow-hidden whitespace-nowrap"
       >
         {selectedOption ? (
