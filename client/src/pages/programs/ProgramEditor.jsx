@@ -57,6 +57,23 @@ export default function ProgramEditor() {
     // Solo guardar si realmente hubo un cambio para evitar llamadas innecesarias al blur
     if (cambios.titulo !== undefined && cambios.titulo === (parte.titulo || '')) return;
 
+    // Actualización optimista inmediata en UI si se actualiza el presidente para sincronizar ¿Qué diría?
+    if (parte.tipoParte?.codigo === 'presidente' && cambios.personaId !== undefined) {
+      setPrograma(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          partes: prev.partes.map(p => {
+            if (p.id === parte.id) return { ...p, ...cambios };
+            if (p.isQueDiria && p.rolSlot === 'titular') {
+              return { ...p, personaId: cambios.personaId, textoLibre: cambios.textoLibre };
+            }
+            return p;
+          })
+        };
+      });
+    }
+
     await api.patch(`/programas/${id}/partes/${parte.id}`, cambios);
     cargar();
   }
@@ -223,6 +240,7 @@ export default function ProgramEditor() {
       // Para las asignaciones dinámicas en maestros
       if (tipoParte.codigo === 'custom_maestros') {
         if (parte.isQueDiria) {
+          if (parte.personaId && p.id === parte.personaId) return true;
           return p.privilegio === 'anciano' || p.privilegio === 'siervo_ministerial';
         }
         return true;
@@ -249,13 +267,42 @@ export default function ProgramEditor() {
     const todasLasPartes = programa.partes || [];
 
     // Regla 1: El presidente y consejero no pueden tener asignaciones en Tesoros o Maestros
-    if (parte.tipoParte.codigo === 'presidente' || parte.tipoParte.codigo === 'consejero_auxiliar') {
-      const choca = todasLasPartes.some(p => p.id !== parte.id && p.personaId === parte.personaId && (p.tipoParte.seccion === 'tesoros' || p.tipoParte.seccion === 'maestros'));
+    // (Excepto ¿Qué diría?, que le corresponde al Presidente)
+    if (parte.tipoParte.codigo === 'presidente') {
+      const choca = todasLasPartes.some(p =>
+        p.id !== parte.id &&
+        p.personaId === parte.personaId &&
+        (p.tipoParte.seccion === 'tesoros' || (p.tipoParte.seccion === 'maestros' && !p.isQueDiria))
+      );
       if (choca) return "⚠️ Esta persona ya tiene una asignación en Tesoros o Maestros.";
     }
+
+    if (parte.tipoParte.codigo === 'consejero_auxiliar') {
+      const choca = todasLasPartes.some(p =>
+        p.id !== parte.id &&
+        p.personaId === parte.personaId &&
+        (p.tipoParte.seccion === 'tesoros' || p.tipoParte.seccion === 'maestros')
+      );
+      if (choca) return "⚠️ Esta persona ya tiene una asignación en Tesoros o Maestros.";
+    }
+
     if (secKey === 'tesoros' || secKey === 'maestros') {
-      const esPresidenteOConsejero = todasLasPartes.some(p => p.id !== parte.id && p.personaId === parte.personaId && (p.tipoParte.codigo === 'presidente' || p.tipoParte.codigo === 'consejero_auxiliar'));
-      if (esPresidenteOConsejero) return "⚠️ El Presidente o Consejero no pueden tener asignaciones en esta sección.";
+      if (parte.isQueDiria) {
+        // ¿Qué diría? es del Presidente; solo alertar si fuera el consejero auxiliar
+        const esConsejero = todasLasPartes.some(p =>
+          p.id !== parte.id &&
+          p.personaId === parte.personaId &&
+          p.tipoParte.codigo === 'consejero_auxiliar'
+        );
+        if (esConsejero) return "⚠️ El Consejero Auxiliar no puede tener asignaciones en esta sección.";
+      } else {
+        const esPresidenteOConsejero = todasLasPartes.some(p =>
+          p.id !== parte.id &&
+          p.personaId === parte.personaId &&
+          (p.tipoParte.codigo === 'presidente' || p.tipoParte.codigo === 'consejero_auxiliar')
+        );
+        if (esPresidenteOConsejero) return "⚠️ El Presidente o Consejero no pueden tener asignaciones en esta sección.";
+      }
     }
 
     // Regla 2: El lector de la biblia no puede participar en Maestros
@@ -472,7 +519,9 @@ export default function ProgramEditor() {
                   }
 
                   const candidatos = getCandidatos(parte);
-                  const mostrarTitulo = !codigosSinTitulo.includes(parte.tipoParte.codigo) && !(parte.tipoParte.codigo === 'discurso_estudiante' && programa.esDiscursoMaestros);
+                  const mostrarTitulo = !codigosSinTitulo.includes(parte.tipoParte.codigo) &&
+                    !(parte.tipoParte.codigo === 'discurso_estudiante' && programa.esDiscursoMaestros) &&
+                    !parte.isQueDiria;
 
                   const isFirstDiscurso = parte.tipoParte.codigo === 'discurso_estudiante' && !parte.grupoCustom && partesSec.findIndex(p => p.tipoParte.codigo === 'discurso_estudiante' && !p.grupoCustom) === index;
 
@@ -685,8 +734,8 @@ export default function ProgramEditor() {
               value={customModal.titulo}
               onChange={e => setCustomModal({ ...customModal, titulo: e.target.value })}
               className="w-full mb-4 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:opacity-50"
-              placeholder="Ej: Demostración"
-              disabled={customModal.seccion === 'vida_cristiana' && customModal.esEstudioLibro}
+              placeholder={customModal.esQueDiria ? '¿Qué diría?' : 'Ej: Demostración'}
+              disabled={(customModal.seccion === 'vida_cristiana' && customModal.esEstudioLibro) || customModal.esQueDiria}
             />
 
             {customModal.seccion === 'maestros' && (
@@ -714,27 +763,36 @@ export default function ProgramEditor() {
                       className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer disabled:opacity-50"
                       checked={customModal.esQueDiria}
                       disabled={customModal.esDiscurso}
-                      onChange={e => setCustomModal({ ...customModal, esQueDiria: e.target.checked })}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        setCustomModal({
+                          ...customModal,
+                          esQueDiria: checked,
+                          titulo: checked ? '¿Qué diría?' : (customModal.titulo === '¿Qué diría?' ? '' : customModal.titulo),
+                          requiereAyudante: checked ? false : customModal.requiereAyudante,
+                          requiereSala: checked ? false : customModal.requiereSala
+                        });
+                      }}
                     />
                   </div>
                   <div className="flex flex-col">
                     <span className={`text-sm font-medium ${customModal.esDiscurso ? 'text-slate-400' : 'text-slate-700 group-hover:text-brand-600 transition-colors'}`}>¿Qué diría?</span>
-                    <p className="text-xs text-slate-500 mt-0.5">Exclusivo para Ancianos y Siervos Ministeriales.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Se asigna automáticamente al Presidente de la reunión.</p>
                   </div>
                 </label>
 
-                <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl border border-slate-200 hover:border-brand-200 hover:bg-brand-50/50 transition-colors mb-4">
-                  <span className={`text-sm font-medium ${customModal.esDiscurso ? 'text-slate-400' : 'text-slate-700'}`}>¿Tendrá 2 personas (Ayudante)?</span>
+                <label className={`flex items-center justify-between cursor-pointer p-3 rounded-xl border border-slate-200 transition-colors mb-4 ${customModal.esDiscurso || customModal.esQueDiria ? 'opacity-50 cursor-not-allowed' : 'hover:border-brand-200 hover:bg-brand-50/50'}`}>
+                  <span className={`text-sm font-medium ${customModal.esDiscurso || customModal.esQueDiria ? 'text-slate-400' : 'text-slate-700'}`}>¿Tendrá 2 personas (Ayudante)?</span>
                   <input
                     type="checkbox"
                     checked={customModal.requiereAyudante}
                     onChange={e => setCustomModal({ ...customModal, requiereAyudante: e.target.checked })}
-                    disabled={customModal.esDiscurso}
+                    disabled={customModal.esDiscurso || customModal.esQueDiria}
                     className="w-4 h-4 text-brand-600 rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
                   />
                 </label>
 
-                {programa.tieneSalaAuxiliar && (
+                {programa.tieneSalaAuxiliar && !customModal.esQueDiria && (
                   <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl border border-slate-200 hover:border-brand-200 hover:bg-brand-50/50 transition-colors mb-6">
                     <span className="text-sm font-medium text-slate-700">¿Se presentará en ambas salas?</span>
                     <input

@@ -63,6 +63,27 @@ exports.getPrograma = catchAsync(async (req, res, next) => {
     ]
   });
   if (!programa) return next(new AppError('Programa no encontrado.', 404));
+
+  // Sincronizar automáticamente partes 'isQueDiria' con el presidente si existe
+  const partePres = programa.partes?.find(p => p.tipoParte?.codigo === 'presidente');
+  if (partePres && partePres.personaId) {
+    const partesQueDiriaPorSincronizar = programa.partes?.filter(
+      p => p.isQueDiria && p.rolSlot === 'titular' && p.personaId !== partePres.personaId
+    );
+    if (partesQueDiriaPorSincronizar && partesQueDiriaPorSincronizar.length > 0) {
+      const ids = partesQueDiriaPorSincronizar.map(p => p.id);
+      await require('../models').PartePrograma.update(
+        { personaId: partePres.personaId, textoLibre: null },
+        { where: { id: ids } }
+      );
+      partesQueDiriaPorSincronizar.forEach(p => {
+        p.personaId = partePres.personaId;
+        p.persona = partePres.persona;
+        p.textoLibre = null;
+      });
+    }
+  }
+
   res.status(200).json({ status: 'success', programa });
 });
 
@@ -84,11 +105,29 @@ exports.generarPrograma = catchAsync(async (req, res, next) => {
 exports.updateParte = catchAsync(async (req, res, next) => {
   const parte = await PartePrograma.findOne({
     where: { id: req.params.parteId, programaId: req.params.id },
+    include: [{ model: TipoParte, as: 'tipoParte' }]
   });
   if (!parte) return next(new AppError('Parte no encontrada.', 404));
 
   const { titulo, personaId, textoLibre } = req.body;
   await parte.update({ titulo, personaId, textoLibre });
+
+  // Si se actualizó el presidente, sincronizar automáticamente cualquier asignación 'isQueDiria'
+  if (parte.tipoParte && parte.tipoParte.codigo === 'presidente') {
+    await PartePrograma.update(
+      {
+        personaId: personaId || null,
+        textoLibre: personaId ? null : 'Por asignar'
+      },
+      {
+        where: {
+          programaId: req.params.id,
+          isQueDiria: true,
+          rolSlot: 'titular'
+        }
+      }
+    );
+  }
 
   res.status(200).json({ status: 'success', parte });
 });
@@ -227,9 +266,24 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
 
   if (!tipoParte) return next(new AppError('Tipo de parte genérico no encontrado en BD', 500));
 
+  let presidentePersonaId = null;
+  if (esQueDiria) {
+    const partePresidente = await PartePrograma.findOne({
+      where: { programaId },
+      include: [{
+        model: TipoParte,
+        as: 'tipoParte',
+        where: { codigo: 'presidente' }
+      }]
+    });
+    if (partePresidente && partePresidente.personaId) {
+      presidentePersonaId = partePresidente.personaId;
+    }
+  }
+
   const grupoCustom = Date.now().toString() + Math.floor(Math.random() * 1000);
   const partesACrear = [];
-  const salas = requiereSala ? ['principal', 'auxiliar'] : ['unica'];
+  const salas = (requiereSala && !esQueDiria) ? ['principal', 'auxiliar'] : ['unica'];
 
   for (const sala of salas) {
     partesACrear.push({
@@ -238,13 +292,14 @@ exports.addCustomParte = catchAsync(async (req, res, next) => {
       titulo: titulo || (esQueDiria ? '¿Qué diría?' : (esDiscurso ? 'Discurso' : 'Asignación Nueva')),
       sala,
       rolSlot: 'titular',
-      textoLibre: 'Por asignar',
+      personaId: esQueDiria && presidentePersonaId ? presidentePersonaId : null,
+      textoLibre: esQueDiria && presidentePersonaId ? null : 'Por asignar',
       grupoCustom,
       isQueDiria: esQueDiria || false,
       orden: tipoParte.orden
     });
 
-    if (requiereAyudante) {
+    if (requiereAyudante && !esQueDiria) {
       partesACrear.push({
         programaId,
         tipoParteId: tipoParte.id,
