@@ -478,7 +478,7 @@ export default function ProgramEditor() {
         </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm isolate">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm relative z-0 isolate">
         {orderSecciones.map((secKey, secIndex) => {
           const isMaestros = secKey === 'maestros';
           const isVida = secKey === 'vida_cristiana';
@@ -493,7 +493,7 @@ export default function ProgramEditor() {
           const config = seccionConfig[secKey];
 
           return (
-            <div key={secKey} className="relative" style={{ zIndex: 100 - secIndex }}>
+            <div key={secKey} className="relative" style={{ zIndex: 10 - secIndex }}>
               <div className={`${config.bg} ${config.text} ${secIndex === 0 ? 'rounded-t-[15px]' : ''} px-5 py-2.5 font-bold uppercase tracking-widest text-xs flex justify-between items-center`}>
                 <span>{config.titulo}</span>
                 {isCustomizable && (

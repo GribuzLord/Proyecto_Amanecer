@@ -10,7 +10,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
 
   return (
     <aside 
-      className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } flex flex-col gap-1`}
     >

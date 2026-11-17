@@ -10,7 +10,7 @@ export default function AppLayout({ children }) {
       {/* Overlay for mobile sidebar */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-20 md:hidden" 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden" 
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -21,9 +21,11 @@ export default function AppLayout({ children }) {
         setIsOpen={setIsMobileMenuOpen} 
       />
       
-      <div id="main-scroll-container" className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
-        <main className="p-4 md:p-6 max-w-6xl mx-auto w-full">{children}</main>
+        <div id="main-scroll-container" className="flex-1 overflow-y-auto">
+          <main className="p-4 md:p-6 max-w-6xl mx-auto w-full">{children}</main>
+        </div>
       </div>
     </div>
   );
